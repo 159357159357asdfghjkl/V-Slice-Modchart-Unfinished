@@ -100,7 +100,6 @@ class SustainTrail extends FlxSprite
   public function new(noteDirection:NoteDirection, sustainLength:Float, noteStyle:NoteStyle)
   {
     super(0, 0, noteStyle.getHoldNoteAssetPath());
-
     antialiasing = true;
 
     this.isPixel = noteStyle.isHoldNotePixel();

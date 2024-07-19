@@ -26,7 +26,6 @@ class NoteSplash extends FlxSprite
   public function new()
   {
     super(0, 0);
-
     setup();
 
     this.alpha = ALPHA;

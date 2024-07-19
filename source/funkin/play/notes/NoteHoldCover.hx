@@ -24,7 +24,6 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
   public function new()
   {
     super(0, 0);
-
     setup();
   }
 

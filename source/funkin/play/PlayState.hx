@@ -65,7 +65,7 @@ import lime.ui.Haptic;
 import openfl.display.BitmapData;
 import openfl.geom.Rectangle;
 import openfl.Lib;
-import funkin.play.ModScripting;
+import funkin.play.modchart.ModScripting;
 #if discord_rpc
 import Discord.DiscordClient;
 #end
@@ -980,7 +980,6 @@ class PlayState extends MusicBeatSubState
           openSubState(pauseSubState);
           // boyfriendPos.put(); // TODO: Why is this here?
         }
-
         #if discord_rpc
         DiscordClient.changePresence(detailsPausedText, currentSong.song + ' (' + storyDifficultyText + ')', iconRPC);
         #end
@@ -1274,7 +1273,6 @@ class PlayState extends MusicBeatSubState
 
       // Resume the countdown.
       Countdown.resumeCountdown();
-
       #if discord_rpc
       if (startTimer.finished)
       {

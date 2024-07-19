@@ -28,7 +28,6 @@ class StrumlineNote extends FlxSprite
   public function new(noteStyle:NoteStyle, isPlayer:Bool, direction:NoteDirection)
   {
     super(0, 0);
-
     this.isPlayer = isPlayer;
 
     this.direction = direction;
