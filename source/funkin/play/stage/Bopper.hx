@@ -349,8 +349,6 @@ class Bopper extends StageProp implements IPlayStateScriptedClass
     return this.animation.curAnim.name;
   }
 
-  public function onCreatePost(event:ScriptEvent) {}
-
   public function onPause(event:PauseScriptEvent) {}
 
   public function onResume(event:ScriptEvent) {}

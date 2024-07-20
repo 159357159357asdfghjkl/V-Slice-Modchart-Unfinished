@@ -88,8 +88,6 @@ interface INoteScriptedClass extends IScriptedClass
  */
 interface IPlayStateScriptedClass extends INoteScriptedClass
 {
-  public function onCreatePost(event:ScriptEvent):Void;
-
   /**
    * Called when the game is paused.
    * Has properties to set whether the pause easter egg will happen,

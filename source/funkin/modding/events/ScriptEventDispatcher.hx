@@ -31,7 +31,6 @@ class ScriptEventDispatcher
       case CREATE:
         target.onCreate(event);
         return;
-
       case DESTROY:
         target.onDestroy(event);
         return;
@@ -141,9 +140,6 @@ class ScriptEventDispatcher
           return;
         case SONG_LOADED:
           t.onSongLoaded(cast event);
-          return;
-        case CREATEPOST:
-          t.onCreatePost(event);
           return;
         default: // Continue;
       }

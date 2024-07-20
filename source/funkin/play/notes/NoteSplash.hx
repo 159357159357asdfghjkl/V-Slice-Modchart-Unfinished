@@ -12,8 +12,8 @@ class NoteSplash extends FlxSprite
   static final FRAMERATE_DEFAULT:Int = 24;
   static final FRAMERATE_VARIANCE:Int = 2;
 
-  public var z:Float = 0;
   public var column:Int = 0;
+  public var z:Float = 0;
 
   static var frameCollection:FlxFramesCollection;
 
@@ -26,6 +26,7 @@ class NoteSplash extends FlxSprite
   public function new()
   {
     super(0, 0);
+
     setup();
 
     this.alpha = ALPHA;

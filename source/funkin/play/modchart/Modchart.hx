@@ -93,15 +93,27 @@ class Modchart
   public static function UpdatePerspective(x:Float, y:Float, z:Float):Vector3D
   {
     /*static var zNear:Float = 0;
-      static var zFar:Float = 100;
-      static var FOV:Float = 90.0;
-      var z1:Float = z / 30000 - 1;
-      var ar:Float = FlxG.width / FlxG.height;
-      var zRange:Float = zNear - zFar;
-      var tanHalfFOV:Float = Math.tan(toRadian(FOV / 2.0));
-      var zPosition:Float = ((-zNear - zFar) / zRange) * z1 + (2.0 * zFar * zNear / zRange);
-      return new Vector3D((x * (1.0 / (tanHalfFOV * ar))) / -zPosition, (y / (1.0 / tanHalfFOV)) / -zPosition, -zPosition); */
-    return new Vector3D(x, y, z);
+        static var zFar:Float = 100;
+        static var FOV:Float = 90.0;
+        var z1:Float = z / 30000 - 1;
+        var ar:Float = FlxG.width / FlxG.height;
+        var zRange:Float = zNear - zFar;
+        var tanHalfFOV:Float = Math.tan(toRadian(FOV / 2.0));
+        var zPosition:Float = ((-zNear - zFar) / zRange) * z1 + (2.0 * zFar * zNear / zRange);
+        return new Vector3D((x * (1.0 / (tanHalfFOV * ar))) / -zPosition, (y / (1.0 / tanHalfFOV)) / -zPosition, -zPosition);
+      return new Vector3D(x, y, z); */
+    var zNear:Float = 0;
+    var zFar:Float = 100;
+    var zRange:Float = zNear - zFar;
+    var tanHalfFOV:Float = Math.tan(Math.PI / 4);
+    var zpos:Float = z;
+    zpos -= 1;
+    var zPerspectiveOffset:Float = (zpos + (2 * zFar * zNear / zRange));
+    var xPerspective:Float = x * (1 / tanHalfFOV);
+    var yPerspective:Float = y / (1 / tanHalfFOV);
+    xPerspective /= -zPerspectiveOffset;
+    yPerspective /= -zPerspectiveOffset;
+    return new Vector3D(xPerspective + (FlxG.width / 2), yPerspective + (FlxG.height / 2), -zPerspectiveOffset);
   }
 
   function selectTanType(angle:Float, is_cosec:Float)

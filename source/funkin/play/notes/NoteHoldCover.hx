@@ -12,10 +12,11 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
 {
   static final FRAMERATE_DEFAULT:Int = 24;
 
+  public var column:Int = 0;
+  public var z:Float = 0;
+
   static var glowFrames:FlxFramesCollection;
 
-  public var z:Float = 0;
-  public var column:Int = 0;
   public var holdNote:SustainTrail;
 
   var glow:FlxSprite;
@@ -24,6 +25,7 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
   public function new()
   {
     super(0, 0);
+
     setup();
   }
 

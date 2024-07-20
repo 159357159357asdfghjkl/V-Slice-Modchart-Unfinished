@@ -11,13 +11,15 @@ import funkin.play.notes.NoteSprite;
 class StrumlineNote extends FlxSprite
 {
   public var isPlayer(default, null):Bool;
-  public var column:Int = 0;
+
   public var direction(default, set):NoteDirection;
-  public var z:Float = 0;
 
   var confirmHoldTimer:Float = -1;
 
   static final CONFIRM_HOLD_TIME:Float = 0.1;
+
+  public var column:Int = 0;
+  public var z:Float = 0;
 
   function set_direction(value:NoteDirection):NoteDirection
   {
@@ -28,6 +30,7 @@ class StrumlineNote extends FlxSprite
   public function new(noteStyle:NoteStyle, isPlayer:Bool, direction:NoteDirection)
   {
     super(0, 0);
+
     this.isPlayer = isPlayer;
 
     this.direction = direction;

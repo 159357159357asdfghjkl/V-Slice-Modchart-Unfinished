@@ -33,8 +33,10 @@ class SustainTrail extends FlxSprite
   public var fullSustainLength:Float = 0;
   public var noteData:Null<SongNoteData>;
   public var parentStrumline:Strumline;
-  public var z:Float = 0;
+
   public var cover:NoteHoldCover = null;
+  public var column:Int = 0;
+  public var z:Float = 0;
 
   /**
    * Set to `true` if the user hit the note and is currently holding the sustain.
@@ -100,6 +102,7 @@ class SustainTrail extends FlxSprite
   public function new(noteDirection:NoteDirection, sustainLength:Float, noteStyle:NoteStyle)
   {
     super(0, 0, noteStyle.getHoldNoteAssetPath());
+
     antialiasing = true;
 
     this.isPixel = noteStyle.isHoldNotePixel();
@@ -301,6 +304,7 @@ class SustainTrail extends FlxSprite
   override public function draw():Void
   {
     if (alpha == 0 || graphic == null || vertices == null) return;
+
     for (camera in cameras)
     {
       if (!camera.visible || !camera.exists) continue;

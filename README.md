@@ -1,17 +1,11 @@
-# Friday Night Funkin'
+# Friday Night Funkin' 
 
 Friday Night Funkin' is a rhythm game. Built using HaxeFlixel for Ludum Dare 47.
 
-This game was made with love to Newgrounds and it's community. Extra love to Tom Fulp.
+This game was made with love to Newgrounds and its community. Extra love to Tom Fulp.
 
 - [Playable web demo on Newgrounds!](https://www.newgrounds.com/portal/view/770371)
 - [Demo download builds for Windows, Mac, and Linux from Itch.io!](https://ninja-muffin24.itch.io/funkin)
-
-### Modchart Version
-
-- [asdf1234](https://github.com/159357159357asdfghjkl) - shut up bitch
-
-This modchart version of FNF is not for official contribution
 
 # Getting Started
 

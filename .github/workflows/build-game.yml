@@ -22,7 +22,7 @@ jobs:
         shell: bash
 
     steps:
-    - name: Masturbate git(Make git happy)
+    - name: Make git happy
       run: |
         git config --global --replace-all safe.directory $GITHUB_WORKSPACE
 
@@ -46,7 +46,7 @@ jobs:
       with:
         gh-token: ${{ steps.app_token.outputs.token }}
 
-    - name: Build game(Shitting)
+    - name: Build game
       if: ${{ matrix.target == 'windows' }}
       run: |
         haxelib run lime build windows -v -release -DGITHUB_BUILD

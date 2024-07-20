@@ -11,8 +11,9 @@ class NoteSprite extends FunkinSprite
 {
   static final DIRECTION_COLORS:Array<String> = ['purple', 'blue', 'green', 'red'];
 
-  public var z:Float = 0;
   public var holdNoteSprite:SustainTrail;
+  public var column:Int = 0;
+  public var z:Float = 0;
 
   var hsvShader:HSVShader;
 
