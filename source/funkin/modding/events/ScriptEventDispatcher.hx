@@ -31,6 +31,9 @@ class ScriptEventDispatcher
       case CREATE:
         target.onCreate(event);
         return;
+      case CREATEPOST:
+        target.onCreatePost(event);
+        return;
       case DESTROY:
         target.onDestroy(event);
         return;

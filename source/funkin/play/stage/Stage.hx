@@ -862,6 +862,8 @@ class Stage extends FlxSpriteGroup implements IPlayStateScriptedClass implements
     return StageRegistry.instance.parseEntryDataWithMigration(id, StageRegistry.instance.fetchEntryVersion(id));
   }
 
+  public function onCreatePost(event:ScriptEvent) {}
+
   public function onScriptEvent(event:ScriptEvent) {}
 
   public function onPause(event:PauseScriptEvent) {}

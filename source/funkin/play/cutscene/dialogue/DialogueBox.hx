@@ -389,6 +389,8 @@ class DialogueBox extends FlxSpriteGroup implements IDialogueScriptedClass imple
     return this.boxSprite?.animation?.finished ?? false;
   }
 
+  public function onCreatePost(event:ScriptEvent) {}
+
   public function onDialogueStart(event:DialogueScriptEvent):Void {}
 
   public function onDialogueCompleteLine(event:DialogueScriptEvent):Void {}

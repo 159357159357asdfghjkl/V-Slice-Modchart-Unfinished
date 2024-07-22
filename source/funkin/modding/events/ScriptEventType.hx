@@ -11,6 +11,8 @@ enum abstract ScriptEventType(String) from String to String
    */
   var CREATE = 'CREATE';
 
+  var CREATEPOST = 'CREATEPOST';
+
   /**
    * Called when the relevant object is destroyed.
    * This should perform relevant cleanup to ensure good performance.

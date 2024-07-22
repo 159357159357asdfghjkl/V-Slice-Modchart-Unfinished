@@ -641,6 +641,8 @@ class Conversation extends FlxSpriteGroup implements IDialogueScriptedClass impl
   {
     return ConversationRegistry.instance.parseEntryDataWithMigration(id, ConversationRegistry.instance.fetchEntryVersion(id));
   }
+
+  public function onCreatePost(event:ScriptEvent):Void {}
 }
 
 // Managing things with a single enum is a lot easier than a multitude of flags.

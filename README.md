@@ -1,4 +1,10 @@
-# Friday Night Funkin' 
+## Modchart Thing
+
+The code is bad, because it's written by me, a haxe beginner
+
+Don't expect it too much
+
+# Friday Night Funkin'
 
 Friday Night Funkin' is a rhythm game. Built using HaxeFlixel for Ludum Dare 47.
 

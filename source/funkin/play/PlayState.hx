@@ -66,6 +66,7 @@ import openfl.display.BitmapData;
 import openfl.geom.Rectangle;
 import openfl.Lib;
 import funkin.play.modchart.ModScripting;
+import funkin.play.modchart.event.Manager;
 #if discord_rpc
 import Discord.DiscordClient;
 #end
@@ -583,6 +584,7 @@ class PlayState extends MusicBeatSubState
   static final BACKGROUND_COLOR:FlxColor = FlxColor.BLACK;
 
   public var modScripting:ModScripting;
+  public var mgr:Manager;
 
   /**
    * Instantiate a new PlayState.
@@ -696,7 +698,11 @@ class PlayState extends MusicBeatSubState
       initMinimalMode();
     }
     initStrumlines();
-
+    playerStrumline.modNumber = 2;
+    opponentStrumline.modNumber = 1; // for mods, no other use
+    modScripting = new ModScripting();
+    mgr = new Manager();
+    mgr.init();
     // Initialize the judgements and combo meter.
     comboPopUps = new PopUpStuff();
     comboPopUps.zIndex = 900;
@@ -735,9 +741,10 @@ class PlayState extends MusicBeatSubState
       // As long as they call `PlayState.instance.startCountdown()` later, the countdown will start.
       startCountdown();
     }
-    playerStrumline.modNumber = 0;
-    opponentStrumline.modNumber = 1; // for mods, no other use
-    modScripting = new ModScripting();
+
+    var event:ScriptEvent = new ScriptEvent(CREATEPOST, false);
+    ScriptEventDispatcher.callEvent(currentStage, event);
+    ScriptEventDispatcher.callEvent(currentSong, event);
     // Do this last to prevent beatHit from being called before create() is done.
     super.create();
 
@@ -932,7 +939,7 @@ class PlayState extends MusicBeatSubState
 
       Conductor.instance.update(); // Normal conductor update.
     }
-
+    mgr.update(elapsed);
     var androidPause:Bool = false;
 
     #if android

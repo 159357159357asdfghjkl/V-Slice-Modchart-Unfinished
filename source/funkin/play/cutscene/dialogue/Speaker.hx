@@ -106,6 +106,8 @@ class Speaker extends FlxSprite implements IDialogueScriptedClass implements IRe
     loadAnimations();
   }
 
+  public function onCreatePost(event:ScriptEvent):Void {}
+
   /**
    * Calls `kill()` on the group's members and then on the group itself.
    * You can revive this group later via `revive()` after this.

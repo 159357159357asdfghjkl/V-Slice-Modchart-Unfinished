@@ -8,10 +8,7 @@ class ModScripting
   var game = PlayState.instance;
   var util:ModTools = new ModTools();
 
-  public function new()
-  {
-    trace('you can already use the mod scripting functions');
-  }
+  public function new():Void {}
 
   public function defineMod(name:String, val:Float, func:(Vector3D) -> Void)
   {
@@ -36,10 +33,10 @@ class ModScripting
 
   public function stepSet() {}
 
-  public function set(name:String, val:Float, pn:Int = -1)
+  public function set(name:String, val:Float, ?pn:Int)
   {
     if (util.modExist(name)) util.fromPN(pn, (a:Strumline) -> {
-      a.mods.modList.set(a.mods.getRealName(name), val);
+      a.mods.modList.set(a.mods.getName(name), val);
     });
   }
 }
@@ -52,18 +49,15 @@ class ModTools
 
   public function fromPN(pn:Int, command:(Strumline) -> Void)
   {
-    switch (pn)
+    if (pn == 2) command(game.playerStrumline);
+    else if (pn == 1) command(game.opponentStrumline);
+    else
     {
-      case 0:
-        command(game.playerStrumline);
-      case 1:
-        command(game.opponentStrumline);
-      case -1:
-        command(game.playerStrumline);
-        command(game.opponentStrumline);
+      command(game.playerStrumline);
+      command(game.opponentStrumline);
     }
   }
 
-  public function modExist(name:String)
-    return game.playerStrumline.mods.exist(name) && game.opponentStrumline.mods.exist(name);
+  public function modExist(name:String):Bool
+    return game.playerStrumline.mods.modNameExists(name) && game.opponentStrumline.mods.modNameExists(name);
 }

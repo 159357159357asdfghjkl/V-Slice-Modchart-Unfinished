@@ -34,6 +34,10 @@ class Strumline extends FlxSpriteGroup
   static final KEY_COUNT:Int = 4;
   static final NOTE_SPLASH_CAP:Int = 6;
 
+  public var mods:Modchart;
+
+  public var modNumber:Int = 0;
+
   static var RENDER_DISTANCE_MS(get, never):Float;
 
   static function get_RENDER_DISTANCE_MS():Float
@@ -163,6 +167,8 @@ class Strumline extends FlxSpriteGroup
 
     // This MUST be true for children to update!
     this.active = true;
+    mods = new Modchart();
+    mods.initMods();
   }
 
   public function refresh():Void
@@ -489,10 +495,9 @@ class Strumline extends FlxSpriteGroup
       note.x = mods.GetXPos(col, realofs, modNumber, xoffArray);
       note.y = (this.y - INITIAL_OFFSET + ypos);
       var perspective = Modchart.UpdatePerspective(note.x, note.y, note.z);
-      note.x = perspective.x;
-      note.y = perspective.y;
+      // note.x = perspective.x;
+      // note.y = perspective.y;
       note.scale.scale(1 / perspective.z);
-      note.updateHitbox();
     }
     for (holdNote in holdNotes.members)
     {
@@ -532,10 +537,9 @@ class Strumline extends FlxSpriteGroup
         }
         var perspective = Modchart.UpdatePerspective(holdNote.x, holdNote.y, holdNote.z);
 
-        holdNote.x = perspective.x;
-        holdNote.y = perspective.y;
+        // holdNote.x = perspective.x;
+        // holdNote.y = perspective.y;
         holdNote.scale.scale(1 / perspective.z);
-        holdNote.updateHitbox();
       }
       else if (conductorInUse.songPosition > holdNote.strumTime && holdNote.hitNote)
       {
@@ -582,10 +586,9 @@ class Strumline extends FlxSpriteGroup
           holdNote.y = (this.y - INITIAL_OFFSET + ypos + STRUMLINE_SIZE / 2);
         }
         var perspective = Modchart.UpdatePerspective(holdNote.x, holdNote.y, holdNote.z);
-        holdNote.x = perspective.x;
-        holdNote.y = perspective.y;
+        // holdNote.x = perspective.x;
+        // holdNote.y = perspective.y;
         holdNote.scale.scale(1 / perspective.z);
-        holdNote.updateHitbox();
       }
     }
 
@@ -608,10 +611,9 @@ class Strumline extends FlxSpriteGroup
       strumNote.y = (yoff + realofs);
 
       var perspective = Modchart.UpdatePerspective(strumNote.x, strumNote.y, strumNote.z);
-      strumNote.x = perspective.x;
-      strumNote.y = perspective.y;
-      strumNote.scale.scale((1 / perspective.z));
-      strumNote.updateHitbox();
+      // strumNote.x = perspective.x;
+      // strumNote.y = perspective.y;
+      strumNote.scale.scale(1 / perspective.z);
     }
     for (splash in noteSplashes.members)
     {
@@ -632,10 +634,9 @@ class Strumline extends FlxSpriteGroup
       splash.y = (yoff + realofs);
 
       var perspective = Modchart.UpdatePerspective(splash.x, splash.y, splash.z);
-      splash.x = perspective.x;
-      splash.y = perspective.y;
+      // splash.x = perspective.x;
+      // splash.y = perspective.y;
       splash.scale.scale(1 / perspective.z);
-      splash.updateHitbox();
     }
     for (cover in noteHoldCovers)
     {
@@ -665,12 +666,10 @@ class Strumline extends FlxSpriteGroup
       cover.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       cover.y = yoff + realofs;
       var perspective = Modchart.UpdatePerspective(cover.x, cover.y, cover.z);
-      cover.x = perspective.x;
-      cover.y = perspective.y;
+      // cover.x = perspective.x;
+      // cover.y = perspective.y;
       cover.scale.scale(1 / perspective.z);
-      cover.updateHitbox();
     }
-
     super.draw();
   }
 
@@ -836,7 +835,7 @@ class Strumline extends FlxSpriteGroup
     return getByDirection(direction).isConfirm();
   }
 
-  public function playNoteSplash(direction:NoteDirection, n:Int):Void
+  public function playNoteSplash(direction:NoteDirection, n:NoteSprite):Void
   {
     // TODO: Add a setting to disable note splashes.
     // if (Settings.noSplash) return;
@@ -854,7 +853,7 @@ class Strumline extends FlxSpriteGroup
       splash.y = this.y;
       splash.y -= INITIAL_OFFSET;
       splash.y += 0;
-      splash.column = n.getDirection();
+      splash.column = n.noteData.getDirection();
     }
   }
 
@@ -884,7 +883,7 @@ class Strumline extends FlxSpriteGroup
       cover.y += INITIAL_OFFSET;
       cover.y += STRUMLINE_SIZE / 2;
       cover.y += -96; // Manual tweaking because fuck.
-      cover.column = holdNote.getDirection();
+      cover.column = holdNote.noteData.getDirection();
     }
   }
 
@@ -1062,6 +1061,18 @@ class Strumline extends FlxSpriteGroup
       case NoteDirection.DOWN: 0 + (1 * Strumline.NOTE_SPACING);
       case NoteDirection.UP: 0 + (2 * Strumline.NOTE_SPACING);
       case NoteDirection.RIGHT: 0 + (3 * Strumline.NOTE_SPACING);
+      default: 0;
+    }
+  }
+
+  function colGetXPos(direction:Int):Float
+  {
+    return switch (direction)
+    {
+      case 0: 0;
+      case 1: 0 + (1 * Strumline.NOTE_SPACING);
+      case 2: 0 + (2 * Strumline.NOTE_SPACING);
+      case 3: 0 + (3 * Strumline.NOTE_SPACING);
       default: 0;
     }
   }
