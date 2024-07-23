@@ -33,7 +33,7 @@ class ModScripting
 
   public function stepSet() {}
 
-  public function set(name:String, val:Float, ?pn:Int)
+  public function setdefault(name:String, val:Float, ?pn:Int)
   {
     if (util.modExist(name)) util.fromPN(pn, (a:Strumline) -> {
       a.mods.modList.set(a.mods.getName(name), val);
