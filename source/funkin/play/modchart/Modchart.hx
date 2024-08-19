@@ -4,14 +4,14 @@ import flixel.FlxG;
 import flixel.math.FlxMath;
 import flixel.math.FlxAngle;
 import openfl.geom.Vector3D;
+import funkin.play.notes.Strumline;
 
 /**
  * Read Me:
  * I'm new to haxe so the code is weird,
  * it is in a mess,
  * don't expect it too much!
- * --but who can optimize it or rewrite this shit
- *
+ * --but who can optimize it or rewrite this shit--
  */
 class Modchart
 {
@@ -26,7 +26,7 @@ class Modchart
 
   public static var MAX_NOTE_ROW:Int = 1 << 30; // from Stepmania
 
-  final ARROW_SIZE = 112;
+  final ARROW_SIZE = Strumline.NOTE_SPACING;
   final STEPMANIA_ARROW_SIZE = 64;
   final SCREEN_HEIGHT = FlxG.height;
 
@@ -173,7 +173,8 @@ class Modchart
       'tandigitalzsteps', 'tandigitalzoffset', 'tandigitalzperiod', 'square', 'squareoffset', 'squareperiod', 'squarez', 'squarezoffset', 'squarezperiod',
       'bounce', 'bounceoffset', 'bounceperiod', 'bouncez', 'bouncezoffset', 'bouncezperiod', 'xmode', 'tiny', 'tipsyx', 'tipsyxspeed', 'tipsyxoffset',
       'tantipsyx', 'tantipsyxspeed', 'tantipsyxoffset', 'tipsyz', 'tipsyzspeed', 'tipsyzoffset', 'tantipsyz', 'tantipsyzspeed', 'tantipsyzoffset', 'drunky',
-      'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod', 'invertsine', 'cosecant',
+      'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod', 'invertsine', 'scale', 'scalex',
+      'scaley', 'squish', 'stretch', 'zoom', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod', 'shrinkmult', 'shrinklinear', 'cosecant',
       'stealthpastreceptors'
     ];
 
@@ -188,7 +189,11 @@ class Modchart
       mods.push('movezoffset$i');
       mods.push('tiny$i');
       mods.push('bumpy$i');
-
+      mods.push('scalex$i');
+      mods.push('scaley$i');
+      mods.push('scale$i');
+      mods.push('squish$i');
+      mods.push('stretch$i');
       modList.set('xmod$i', 1);
       modList.set('cmod$i', -1);
     }
@@ -206,6 +211,18 @@ class Modchart
     altname.set('decel', 'brake');
     altname.set('drift', 'drunk');
     altname.set('float', 'tipsy');
+
+    // troll engine modname
+    altname.set('tipz', 'tipsyz');
+    altname.set('tipzspeed', 'tipsyzspeed');
+    altname.set('tipzoffset', 'tipsyzoffset');
+    altname.set('transformx', 'movex'); // but different
+    altname.set('transformy', 'movey');
+    altname.set('transformz', 'movez');
+    altname.set('transformx-a', 'movexoffset');
+    altname.set('transformy-a', 'moveyoffset');
+    altname.set('transformz-a', 'movezoffset');
+    altname.set('opponentswap', 'swap');
   }
 
   function getModCondition(s:String):Bool
@@ -413,16 +430,16 @@ class Modchart
     return f;
   }
 
-  public function GetXPos(iCol:Int, fYOffset:Float, mn:Int, xOffset:Array<Float>):Float
+  public function GetXPos(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>):Float
   {
     var time:Float = (Conductor.instance.songPosition / 1000);
-    var f:Float = xOffset[iCol] * 1; // 以后替换
+    var f:Float = xOffset[iCol] * 1;
     if (getModCondition('movex$iCol')) f += ARROW_SIZE * getValue('movex${iCol}') + getValue('movexoffset$iCol');
     if (getModCondition('movex')) f += ARROW_SIZE * getValue('movex') + getValue('movexoffset');
     if (getModCondition('tornado')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tornado'), getValue('tornadooffset'),
-      getValue('tornadoperiod'), xOffset, 1, fYOffset); // 以后换field_zoom
+      getValue('tornadoperiod'), xOffset, 1, fYOffset);
     if (getModCondition('tantornado')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tantornado'), getValue('tantornadooffset'),
-      getValue('tantornadoperiod'), xOffset, 1, fYOffset, 1); // 以后换field_zoom
+      getValue('tantornadoperiod'), xOffset, 1, fYOffset, 1);
     if (getModCondition('drunk')) f += getValue('drunk') * FlxMath.fastCos(CalculateDrunkAngle(time, getValue('drunkspeed'), iCol, getValue('drunkoffset'),
       0.2, fYOffset, getValue('drunkperiod'), 10)) * ARROW_SIZE * 0.5;
     if (getModCondition('tandrunk')) f += getValue('tandrunk') * selectTanType(CalculateDrunkAngle(time, getValue('tandrunkspeed'), iCol,
@@ -439,7 +456,7 @@ class Modchart
       var iFirstCol:Int = 0;
       var iLastCol:Int = 3;
       var iNewCol:Int = Std.int(scale(iCol, iFirstCol, iLastCol, iLastCol, iFirstCol));
-      var zoom:Int = 1; // 以后替换
+      var zoom:Int = 1;
       var fOldPixelOffset:Float = xOffset[iCol] * zoom;
       var fNewPixelOffset:Float = xOffset[iNewCol] * zoom;
       var fDistance:Float = fNewPixelOffset - fOldPixelOffset;
@@ -477,7 +494,7 @@ class Modchart
 
       f += getValue('bounce') * ARROW_SIZE * 0.5 * fBounceAmt;
     }
-    if (getModCondition('xmode')) f += getValue('xmode') * (mn == 1 ? fYOffset : -fYOffset);
+    if (getModCondition('xmode')) f += getValue('xmode') * (pn == 1 ? fYOffset : -fYOffset);
     if (getModCondition('tiny'))
     {
       // Allow Tiny to pull tracks together, but not to push them apart.
@@ -485,17 +502,15 @@ class Modchart
       fTinyPercent = Math.min(Math.pow(0.5, fTinyPercent), 1.);
       f *= fTinyPercent;
     }
-    if (getModCondition('tipsyx')) f += getValue('tipsyx') * UpdateTipsy(time, getValue('tipsyxoffset'), getValue('tipsyxspeed'), iCol); // 限时返场
+    if (getModCondition('tipsyx')) f += getValue('tipsyx') * UpdateTipsy(time, getValue('tipsyxoffset'), getValue('tipsyxspeed'), iCol);
     if (getModCondition('tantipsyx')) f += getValue('tantipsyx') * UpdateTipsy(time, getValue('tantipsyxoffset'), getValue('tantipsyxspeed'), iCol, 1);
-    if (getModCondition('swap')) f += FlxG.width / 2 * getValue('swap') * (mn == 0 ? -1 : 1);
+    if (getModCondition('swap')) f += FlxG.width / 2 * getValue('swap') * (pn == 0 ? -1 : 1);
     if (getModCondition('invertsine')) f += FlxMath.fastSin(0 +
       (fYOffset * 0.004)) * (ARROW_SIZE * (iCol % 2 == 0 ? 1 : -1) * getValue('invertsine') * 0.5); // from modcharting tools
     return f;
   }
 
-  public var realScrollSpeed:Float;
-
-  public function GetYPos(iCol:Int, fYOffset:Float, mn:Int, xOffset:Array<Float>):Float
+  public function GetYPos(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>):Float
   {
     var f:Float = fYOffset;
     var time:Float = (Conductor.instance.songPosition / 1000);
@@ -530,16 +545,16 @@ class Modchart
     return f;
   }
 
-  public function GetZPos(iCol:Int, fYOffset:Float, mn:Int, xOffset:Array<Float>):Float
+  public function GetZPos(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>):Float
   {
     var f:Float = 0;
     var time:Float = (Conductor.instance.songPosition / 1000);
     if (getModCondition('movez$iCol')) f += ARROW_SIZE * getValue('movez$iCol') + getValue('movezoffset$iCol');
     if (getModCondition('movez')) f += ARROW_SIZE * getValue('movez') + getValue('movezoffset');
     if (getModCondition('tornadoz')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tornadoz'), getValue('tornadozoffset'),
-      getValue('tornadozperiod'), xOffset, 1, fYOffset); // 以后换field_zoom
+      getValue('tornadozperiod'), xOffset, 1, fYOffset);
     if (getModCondition('tantornadoz')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tantornadoz'), getValue('tantornadozoffset'),
-      getValue('tantornadozperiod'), xOffset, 1, fYOffset, 1); // 以后换field_zoom
+      getValue('tantornadozperiod'), xOffset, 1, fYOffset, 1);
     if (getModCondition('drunkz')) f += getValue('drunkz') * FlxMath.fastCos(CalculateDrunkAngle(time, getValue('drunkzspeed'), iCol,
       getValue('drunkzoffset'), 0.2, fYOffset, getValue('drunkzperiod'), 10)) * ARROW_SIZE * 0.5;
     if (getModCondition('tandrunkz')) f += getValue('tandrunkz') * selectTanType(CalculateDrunkAngle(time, getValue('tandrunkzspeed'), iCol,
@@ -582,19 +597,80 @@ class Modchart
     }
     if (getModCondition('parabolaz')) f += getValue('parabolaz') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE);
     if (getModCondition('attenuatez')) f += getValue('attenuatez') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE) * (xOffset[iCol] / ARROW_SIZE);
-    if (getModCondition('tipsyz')) f += getValue('tipsyz') * UpdateTipsy(time, getValue('tipsyzoffset'), getValue('tipsyzspeed'), iCol); // 限时返场
+    if (getModCondition('tipsyz')) f += getValue('tipsyz') * UpdateTipsy(time, getValue('tipsyzoffset'), getValue('tipsyzspeed'), iCol);
     if (getModCondition('tantipsyz')) f += getValue('tantipsyz') * UpdateTipsy(time, getValue('tantipsyzoffset'), getValue('tantipsyzspeed'), iCol, 1);
     return f;
   }
 
-  public function GetRotation(iCol:Int, fYOffset:Float, mn:Int, xOffset:Array<Float>):Array<Float>
+  public function GetRotation(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>):Array<Float>
   {
     return [];
   }
 
-  public function ReceptorGetRotation(iCol:Int, fYOffset:Float, mn:Int, xOffset:Array<Float>):Array<Float>
+  public function ReceptorGetRotation(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>):Array<Float>
   {
     return [];
+  }
+
+  public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultscale:Float, isSus:Bool):Array<Float>
+  {
+    var x:Float = defaultscale;
+    var y:Float = defaultscale;
+
+    x += getValue('scale') + getValue('scale$iCol') + getValue('scalex$iCol') + getValue('scalex');
+    y += getValue('scale') + getValue('scale$iCol') + getValue('scaley$iCol') + getValue('scaley');
+    var angle = 0;
+
+    var stretch = getValue("stretch") + getValue('stretch$iCol');
+    var squish = getValue("squish") + getValue('squish$iCol');
+    var stretchX = FlxMath.lerp(1, 0.5, stretch);
+    var stretchY = FlxMath.lerp(1, 2, stretch);
+    var squishX = FlxMath.lerp(1, 2, squish);
+    var squishY = FlxMath.lerp(1, 0.5, squish);
+    x *= (FlxMath.fastSin(angle * Math.PI / 180) * squishY) + (FlxMath.fastCos(angle * Math.PI / 180) * squishX);
+    x *= (FlxMath.fastSin(angle * Math.PI / 180) * stretchY) + (FlxMath.fastCos(angle * Math.PI / 180) * stretchX);
+    y *= (FlxMath.fastCos(angle * Math.PI / 180) * stretchY) + (FlxMath.fastSin(angle * Math.PI / 180) * stretchX);
+    y *= (FlxMath.fastCos(angle * Math.PI / 180) * squishY) + (FlxMath.fastSin(angle * Math.PI / 180) * squishX);
+
+    if (isSus) y = 1;
+    return [x, y];
+  }
+
+  public function GetZoom(iCol:Int, fYOffset:Float, pn:Int):Float
+  {
+    var fZoom:Float = 1.0;
+    // Design change:  Instead of having a flag in the style that toggles a
+    // fixed zoom (0.6) that is only applied to the columns, ScreenGameplay now
+    // calculates a zoom factor to apply to the notefield and puts it in the
+    // PlayerState. -Kyz
+    var fPulseInner:Float = 1.0;
+    if (getModCondition('pulseinner') || getModCondition('pulseouter'))
+    {
+      fPulseInner = ((getValue('pulseinner') * 0.5) + 1);
+      if (fPulseInner == 0) fPulseInner = 0.01;
+    }
+    if (getModCondition('pulseinner') || getModCondition('pulseouter'))
+    {
+      var sine:Float = FlxMath.fastSin(((fYOffset + (100.0 * (getValue('pulseoffset')))) / (0.4 * (ARROW_SIZE + (getValue('pulseperiod') * ARROW_SIZE)))));
+
+      fZoom *= (sine * (getValue('pulseouter') * 0.5)) + fPulseInner;
+    }
+    if (getModCondition('shrinkmult') && fYOffset >= 0) fZoom *= 1 / (1 + (fYOffset * (getValue('shrinkmult') / 100.0)));
+
+    if (getModCondition('shrinklinear') && fYOffset >= 0) fZoom += fYOffset * (0.5 * getValue('shrinklinear') / ARROW_SIZE);
+
+    if (getModCondition('tiny'))
+    {
+      var fTinyPercent = getValue('tiny');
+      fTinyPercent = Math.pow(0.5, fTinyPercent);
+      fZoom *= fTinyPercent;
+    }
+    if (getModCondition('tiny$iCol'))
+    {
+      var fTinyPercent = Math.pow(0.5, getValue('tiny$iCol'));
+      fZoom *= fTinyPercent;
+    }
+    return fZoom;
   }
 
   public function new():Void {}
@@ -604,6 +680,4 @@ class Modchart
   idk it should be working
   default vals:
   BlinkModFrequency=0.3333
-  MiniPercentBase=0.5
-  MiniPercentGate=1
  */

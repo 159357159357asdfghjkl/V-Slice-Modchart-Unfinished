@@ -35,7 +35,6 @@ class Strumline extends FlxSpriteGroup
   static final NOTE_SPLASH_CAP:Int = 6;
 
   public var mods:Modchart;
-
   public var modNumber:Int = 0;
 
   static var RENDER_DISTANCE_MS(get, never):Float;
@@ -167,6 +166,8 @@ class Strumline extends FlxSpriteGroup
 
     // This MUST be true for children to update!
     this.active = true;
+
+    // Init Modchart Stuff
     mods = new Modchart();
     mods.initMods();
   }
@@ -480,13 +481,13 @@ class Strumline extends FlxSpriteGroup
       var vwoosh:Bool = note.holdNoteSprite == null;
       // Set the note's position.
       var col:Int = note.noteData.getDirection();
-      var xoff:Float = this.x + colGetXPos(col) - NUDGE;
+      var xoff:Float = this.x + (col * NOTE_SPACING) - NUDGE;
 
       var xoffArray:Array<Float> = [
-        this.x + colGetXPos(0) - NUDGE,
-        this.x + colGetXPos(1) - NUDGE,
-        this.x + colGetXPos(2) - NUDGE,
-        this.x + colGetXPos(3) - NUDGE
+        this.x - NUDGE,
+        this.x + 1 * NOTE_SPACING - NUDGE,
+        this.x + 2 * NOTE_SPACING - NUDGE,
+        this.x + 3 * NOTE_SPACING - NUDGE
       ];
 
       var realofs = mods.GetYOffset(conductorInUse, note.strumTime, scrollSpeed, vwoosh, col);
@@ -494,39 +495,37 @@ class Strumline extends FlxSpriteGroup
       note.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
       note.x = mods.GetXPos(col, realofs, modNumber, xoffArray);
       note.y = (this.y - INITIAL_OFFSET + ypos);
+      var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle._data.assets.note.scale * (STRUMLINE_SIZE / note.frameWidth), false);
+      var zoom:Float = mods.GetZoom(col, realofs, modNumber);
       var perspective = Modchart.UpdatePerspective(note.x, note.y, note.z);
+      note.scale.x = scale[0] * zoom;
+      note.scale.y = scale[1] * zoom;
       // note.x = perspective.x;
       // note.y = perspective.y;
-      note.scale.scale(1 / perspective.z);
+      // note.scale.scale(1 / perspective.z);
     }
     for (holdNote in holdNotes.members)
     {
       if (holdNote == null || !holdNote.alive) continue;
-
       if (holdNote.missedNote && (holdNote.fullSustainLength > holdNote.sustainLength))
       {
         var yOffset:Float = (holdNote.fullSustainLength - holdNote.sustainLength) * Constants.PIXELS_PER_MS;
         var col:Int = holdNote.noteData.getDirection();
         var vwoosh:Bool = false;
-        var xoff:Float = this.x + colGetXPos(col) + STRUMLINE_SIZE / 2 - holdNote.width / 2;
-        var xoffArray:Array<Float> = [this.x + colGetXPos(0) + STRUMLINE_SIZE / 2 - holdNote.width / 2,
-          this.x
-          + colGetXPos(1)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2,
-          this.x
-          + colGetXPos(2)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2,
-          this.x
-          + colGetXPos(3)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2];
+        var xoff:Float = this.x + (col * NOTE_SPACING) + STRUMLINE_SIZE / 2 - holdNote.width / 2;
+        var xoffArray:Array<Float> = [
+          this.x + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + 1 * NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + 2 * NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + 3 * NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2
+        ];
         var realofs = mods.GetYOffset(conductorInUse, holdNote.strumTime, scrollSpeed, vwoosh, col);
         var xpos = mods.GetXPos(col, realofs, modNumber, xoffArray);
         var ypos = mods.GetYPos(col, realofs, modNumber, xoffArray);
         holdNote.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
         holdNote.x = xpos;
+        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle.fetchHoldNoteScale(), true);
+        var zoom:Float = mods.GetZoom(col, realofs, modNumber);
         if (Preferences.downscroll)
         {
           holdNote.y = (this.y - INITIAL_OFFSET + ypos - holdNote.height + STRUMLINE_SIZE / 2);
@@ -536,10 +535,11 @@ class Strumline extends FlxSpriteGroup
           holdNote.y = (this.y - INITIAL_OFFSET + ypos + yOffset + STRUMLINE_SIZE / 2);
         }
         var perspective = Modchart.UpdatePerspective(holdNote.x, holdNote.y, holdNote.z);
-
+        holdNote.scale.x = scale[0] * zoom;
+        holdNote.scale.y = scale[1] * zoom;
         // holdNote.x = perspective.x;
         // holdNote.y = perspective.y;
-        holdNote.scale.scale(1 / perspective.z);
+        // holdNote.scale.scale(1 / perspective.z);
       }
       else if (conductorInUse.songPosition > holdNote.strumTime && holdNote.hitNote)
       {
@@ -556,27 +556,21 @@ class Strumline extends FlxSpriteGroup
       {
         var vwoosh:Bool = false;
         var col:Int = holdNote.noteData.getDirection();
-        var xoff:Float = this.x + colGetXPos(col) + STRUMLINE_SIZE / 2 - holdNote.width / 2;
+        var xoff:Float = this.x + (col * NOTE_SPACING) + STRUMLINE_SIZE / 2 - holdNote.width / 2;
 
-        var xoffArray:Array<Float> = [this.x + colGetXPos(0) + STRUMLINE_SIZE / 2 - holdNote.width / 2,
-          this.x
-          + colGetXPos(1)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2,
-          this.x
-          + colGetXPos(2)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2,
-          this.x
-          + colGetXPos(3)
-          + STRUMLINE_SIZE / 2
-          - holdNote.width / 2];
+        var xoffArray:Array<Float> = [
+          this.x + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + 2 * NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2,
+          this.x + 3 * NOTE_SPACING + STRUMLINE_SIZE / 2 - holdNote.width / 2
+        ];
         var realofs = mods.GetYOffset(conductorInUse, holdNote.strumTime, scrollSpeed, vwoosh, col);
         var xpos = mods.GetXPos(col, realofs, modNumber, xoffArray);
         var ypos = mods.GetYPos(col, realofs, modNumber, xoffArray);
         holdNote.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
         holdNote.x = xpos;
-
+        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle.fetchHoldNoteScale(), true);
+        var zoom:Float = mods.GetZoom(col, realofs, modNumber);
         if (Preferences.downscroll)
         {
           holdNote.y = (this.y - INITIAL_OFFSET + ypos - holdNote.height + STRUMLINE_SIZE / 2);
@@ -586,9 +580,11 @@ class Strumline extends FlxSpriteGroup
           holdNote.y = (this.y - INITIAL_OFFSET + ypos + STRUMLINE_SIZE / 2);
         }
         var perspective = Modchart.UpdatePerspective(holdNote.x, holdNote.y, holdNote.z);
+        holdNote.scale.x = scale[0] * zoom;
+        holdNote.scale.y = scale[1] * zoom;
         // holdNote.x = perspective.x;
         // holdNote.y = perspective.y;
-        holdNote.scale.scale(1 / perspective.z);
+        // holdNote.scale.scale(1 / perspective.z);
       }
     }
 
@@ -596,79 +592,86 @@ class Strumline extends FlxSpriteGroup
     {
       if (strumNote == null || !strumNote.alive) continue;
       var col:Int = strumNote.column;
-      var xoff = this.x + colGetXPos(col) + INITIAL_OFFSET;
-      var yoff:Float = this.y;
-      var xoffArray:Array<Float> = [
-        this.x + colGetXPos(0) + INITIAL_OFFSET,
-        this.x + colGetXPos(1) + INITIAL_OFFSET,
-        this.x + colGetXPos(2) + INITIAL_OFFSET,
-        this.x + colGetXPos(3) + INITIAL_OFFSET
-      ];
+      var xoff = this.x + (col * NOTE_SPACING) + INITIAL_OFFSET + noteStyle._data.assets.noteStrumline.offsets[0];
+      var yoff:Float = this.y + noteStyle._data.assets.noteStrumline.offsets[1];
+      var xoffArray:Array<Float> = [this.x + INITIAL_OFFSET + noteStyle._data.assets.noteStrumline.offsets[0],
+        this.x
+        + NOTE_SPACING
+        + INITIAL_OFFSET
+        + noteStyle._data.assets.noteStrumline.offsets[0],
+        this.x
+        + 2 * NOTE_SPACING
+        + INITIAL_OFFSET
+        + noteStyle._data.assets.noteStrumline.offsets[0],
+        this.x
+        + 3 * NOTE_SPACING
+        + INITIAL_OFFSET
+        + noteStyle._data.assets.noteStrumline.offsets[0]];
 
       var realofs = mods.GetYPos(col, 0, modNumber, xoffArray);
       strumNote.z = mods.GetZPos(col, 0, modNumber, xoffArray);
       strumNote.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       strumNote.y = (yoff + realofs);
-
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, (Std.int(Strumline.STRUMLINE_SIZE * noteStyle.getStrumlineScale()) / strumNote.frameWidth),
+        false);
+      var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(strumNote.x, strumNote.y, strumNote.z);
+      strumNote.scale.x = scale[0] * zoom;
+      strumNote.scale.y = scale[1] * zoom;
       // strumNote.x = perspective.x;
       // strumNote.y = perspective.y;
-      strumNote.scale.scale(1 / perspective.z);
+      // strumNote.scale.scale(1 / perspective.z);
     }
     for (splash in noteSplashes.members)
     {
       if (splash == null || !splash.alive) continue;
       var col:Int = splash.column;
-      var xoff:Float = this.x + colGetXPos(col) + INITIAL_OFFSET;
+      var xoff:Float = this.x + (col * NOTE_SPACING) + INITIAL_OFFSET;
       var yoff:Float = this.y - INITIAL_OFFSET;
       var xoffArray:Array<Float> = [
-        this.x + colGetXPos(0) + INITIAL_OFFSET,
-        this.x + colGetXPos(1) + INITIAL_OFFSET,
-        this.x + colGetXPos(2) + INITIAL_OFFSET,
-        this.x + colGetXPos(3) + INITIAL_OFFSET
+        this.x + INITIAL_OFFSET,
+        this.x + NOTE_SPACING + INITIAL_OFFSET,
+        this.x + 2 * NOTE_SPACING + INITIAL_OFFSET,
+        this.x + 3 * NOTE_SPACING + INITIAL_OFFSET
       ];
       var realofs = mods.GetYPos(col, 0, modNumber, xoffArray);
       splash.z = mods.GetZPos(col, 0, modNumber, xoffArray);
 
       splash.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       splash.y = (yoff + realofs);
-
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, 1, false);
+      var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(splash.x, splash.y, splash.z);
+      splash.scale.x = scale[0] * zoom;
+      splash.scale.y = scale[1] * zoom;
       // splash.x = perspective.x;
       // splash.y = perspective.y;
-      splash.scale.scale(1 / perspective.z);
+      // splash.scale.scale(1 / perspective.z);
     }
     for (cover in noteHoldCovers)
     {
       if (cover == null || !cover.alive) continue;
       var col:Int = cover.column;
-      var xoff:Float = this.x + colGetXPos(col) + STRUMLINE_SIZE / 2 - cover.width / 2 - 12;
+      var xoff:Float = this.x + (col * NOTE_SPACING) + STRUMLINE_SIZE / 2 - cover.width / 2 - 12;
       var yoff:Float = this.y + INITIAL_OFFSET + STRUMLINE_SIZE / 2 - 96;
-      var xoffArray:Array<Float> = [this.x + colGetXPos(0) + STRUMLINE_SIZE / 2 - cover.width / 2 - 12,
-        this.x
-        + colGetXPos(1)
-        + STRUMLINE_SIZE / 2
-        - cover.width / 2
-        - 12,
-        this.x
-        + colGetXPos(2)
-        + STRUMLINE_SIZE / 2
-        - cover.width / 2
-        - 12,
-        this.x
-        + colGetXPos(3)
-        + STRUMLINE_SIZE / 2
-        - cover.width / 2
-        - 12];
+      var xoffArray:Array<Float> = [
+        this.x + STRUMLINE_SIZE / 2 - cover.width / 2 - 12,
+        this.x + NOTE_SPACING + STRUMLINE_SIZE / 2 - cover.width / 2 - 12,
+        this.x + 2 * NOTE_SPACING + STRUMLINE_SIZE / 2 - cover.width / 2 - 12,
+        this.x + 3 * NOTE_SPACING + STRUMLINE_SIZE / 2 - cover.width / 2 - 12
+      ];
       var realofs = mods.GetYPos(col, 0, modNumber, xoffArray);
       cover.z = mods.GetZPos(col, 0, modNumber, xoffArray);
-
       cover.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       cover.y = yoff + realofs;
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, 1, false);
+      var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(cover.x, cover.y, cover.z);
+      cover.scale.x = scale[0] * zoom;
+      cover.scale.y = scale[1] * zoom;
       // cover.x = perspective.x;
       // cover.y = perspective.y;
-      cover.scale.scale(1 / perspective.z);
+      // cover.scale.scale(1 / perspective.z);
     }
     super.draw();
   }
@@ -1061,18 +1064,6 @@ class Strumline extends FlxSpriteGroup
       case NoteDirection.DOWN: 0 + (1 * Strumline.NOTE_SPACING);
       case NoteDirection.UP: 0 + (2 * Strumline.NOTE_SPACING);
       case NoteDirection.RIGHT: 0 + (3 * Strumline.NOTE_SPACING);
-      default: 0;
-    }
-  }
-
-  function colGetXPos(direction:Int):Float
-  {
-    return switch (direction)
-    {
-      case 0: 0;
-      case 1: 0 + (1 * Strumline.NOTE_SPACING);
-      case 2: 0 + (2 * Strumline.NOTE_SPACING);
-      case 3: 0 + (3 * Strumline.NOTE_SPACING);
       default: 0;
     }
   }
