@@ -18,6 +18,9 @@ class Modchart
 {
   public var modList:Map<String, Float> = new Map<String, Float>();
 
+  public static var rad:Float = Math.PI / 180.0;
+  public static var deg:Float = 180.0 / Math.PI;
+
   public var altname:Map<String, String> = new Map<String, String>();
 
   public static var ROWS_PER_BEAT:Int = 48;
@@ -84,37 +87,16 @@ class Modchart
     }
   }
 
-  public static function toRadian(x:Float):Float
-    return x * (Math.PI / 180.0);
-
-  public static function toDegree(x:Float):Float
-    return x * (180.0 / Math.PI);
-
-  // https://ogldev.org/www/tutorial12/tutorial12.html
+  // shortcut some steps
   public static function UpdatePerspective(x:Float, y:Float, z:Float):Vector3D
   {
-    /*static var zNear:Float = 0;
-       static var zFar:Float = 100;
-       static var FOV:Float = 90.0;
-       var z1:Float = z / 30000 - 1;
-       var ar:Float = FlxG.width / FlxG.height;
-       var zRange:Float = zNear - zFar;
-       var tanHalfFOV:Float = Math.tan(toRadian(FOV / 2.0));
-       var zPosition:Float = ((-zNear - zFar) / zRange) * z1 + (2.0 * zFar * zNear / zRange);
-       return new Vector3D((x * (1.0 / (tanHalfFOV * ar))) / -zPosition, (y / (1.0 / tanHalfFOV)) / -zPosition, -zPosition);
-      return new Vector3D(x, y, z); */
-    var zNear:Float = 0;
-    var zFar:Float = 100;
-    var zRange:Float = zNear - zFar;
-    var tanHalfFOV:Float = Math.tan(Math.PI / 4);
-    var zpos:Float = z;
-    zpos -= 1;
-    var zPerspectiveOffset:Float = (zpos + (2 * zFar * zNear / zRange));
-    var xPerspective:Float = (x - (FlxG.width / 2)) * (1 / tanHalfFOV);
-    var yPerspective:Float = (y - FlxG.height / 2) * (1 / tanHalfFOV);
-    xPerspective /= -zPerspectiveOffset;
-    yPerspective /= -zPerspectiveOffset;
-    return new Vector3D(xPerspective + (FlxG.width / 2), yPerspective + (FlxG.height / 2), -zPerspectiveOffset);
+    var tanHalfFOV:Float = Math.tan(rad * 45);
+    var pos:Vector3D = new Vector3D(x - FlxG.width / 2, y - FlxG.height / 2, z / 1000 - 1);
+    var newXPos:Float = pos.x * (1 / tanHalfFOV) / -pos.z + FlxG.width / 2;
+    var newYPos:Float = pos.y / (1 / tanHalfFOV) / -pos.z + FlxG.height / 2;
+    var zScale:Float = -pos.z;
+    zScale = 1 / zScale;
+    return new Vector3D(newXPos, newYPos, zScale);
   }
 
   function selectTanType(angle:Float, is_cosec:Float)
