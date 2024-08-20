@@ -474,8 +474,10 @@ class TitleState extends MusicBeatState
               if (ngSpr != null) ngSpr.visible = true;
             case 8:
               deleteCoolText();
+              createCoolText(['BUT THE MODCHART FRAMEWORK IS', 'WITHOUT ANY ASSOCIATION']);
               if (ngSpr != null) ngSpr.visible = false;
             case 9:
+              deleteCoolText();
               createCoolText([curWacky[0]]);
             case 11:
               addMoreText(curWacky[1]);

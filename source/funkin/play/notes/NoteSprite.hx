@@ -14,6 +14,7 @@ class NoteSprite extends FunkinSprite
   public var holdNoteSprite:SustainTrail;
   public var column:Int = 0;
   public var z:Float = 0;
+  public var defaultScale:Array<Float>;
 
   var hsvShader:HSVShader;
 
@@ -148,7 +149,7 @@ class NoteSprite extends FunkinSprite
 
     setGraphicSize(Strumline.STRUMLINE_SIZE);
     updateHitbox();
-
+    defaultScale = [scale.x, scale.y];
     this.shader = hsvShader;
   }
 

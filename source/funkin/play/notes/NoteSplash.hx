@@ -14,6 +14,7 @@ class NoteSplash extends FlxSprite
 
   public var column:Int = 0;
   public var z:Float = 0;
+  public var defaultScale:Array<Float>;
 
   static var frameCollection:FlxFramesCollection;
 
@@ -28,7 +29,7 @@ class NoteSplash extends FlxSprite
     super(0, 0);
 
     setup();
-
+    defaultScale = [scale.x, scale.y];
     this.alpha = ALPHA;
     this.animation.finishCallback = this.onAnimationFinished;
   }

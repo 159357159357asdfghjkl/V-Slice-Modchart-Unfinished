@@ -20,6 +20,7 @@ class StrumlineNote extends FlxSprite
 
   public var column:Int = 0;
   public var z:Float = 0;
+  public var defaultScale:Array<Float>;
 
   function set_direction(value:NoteDirection):NoteDirection
   {
@@ -83,6 +84,7 @@ class StrumlineNote extends FlxSprite
 
     this.setGraphicSize(Std.int(Strumline.STRUMLINE_SIZE * noteStyle.getStrumlineScale()));
     this.updateHitbox();
+    defaultScale = [scale.x, scale.y];
     noteStyle.applyStrumlineOffsets(this);
 
     this.playStatic();

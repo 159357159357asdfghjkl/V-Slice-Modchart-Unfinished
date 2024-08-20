@@ -37,6 +37,7 @@ class SustainTrail extends FlxSprite
   public var cover:NoteHoldCover = null;
   public var column:Int = 0;
   public var z:Float = 0;
+  public var defaultScale:Array<Float>;
 
   /**
    * Set to `true` if the user hit the note and is currently holding the sustain.
@@ -134,7 +135,7 @@ class SustainTrail extends FlxSprite
 
     updateClipping();
     indices = new DrawData<Int>(12, true, TRIANGLE_VERTEX_INDICES);
-
+    defaultScale = [scale.x, scale.y];
     this.active = true; // This NEEDS to be true for the note to be drawn!
   }
 

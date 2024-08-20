@@ -5,6 +5,7 @@ import flixel.math.FlxMath;
 import flixel.math.FlxAngle;
 import openfl.geom.Vector3D;
 import funkin.play.notes.Strumline;
+import flixel.math.FlxPoint;
 
 /**
  * Read Me:
@@ -84,10 +85,10 @@ class Modchart
   }
 
   public static function toRadian(x:Float):Float
-    return x * Math.PI / 180.0;
+    return x * (Math.PI / 180.0);
 
   public static function toDegree(x:Float):Float
-    return x * 180.0 / Math.PI;
+    return x * (180.0 / Math.PI);
 
   // https://ogldev.org/www/tutorial12/tutorial12.html
   public static function UpdatePerspective(x:Float, y:Float, z:Float):Vector3D
@@ -211,18 +212,13 @@ class Modchart
     altname.set('decel', 'brake');
     altname.set('drift', 'drunk');
     altname.set('float', 'tipsy');
-
-    // troll engine modname
     altname.set('tipz', 'tipsyz');
     altname.set('tipzspeed', 'tipsyzspeed');
     altname.set('tipzoffset', 'tipsyzoffset');
-    altname.set('transformx', 'movex'); // but different
-    altname.set('transformy', 'movey');
-    altname.set('transformz', 'movez');
-    altname.set('transformx-a', 'movexoffset');
-    altname.set('transformy-a', 'moveyoffset');
-    altname.set('transformz-a', 'movezoffset');
-    altname.set('opponentswap', 'swap');
+
+    altname.set('mini-old', 'tiny'); // in old versions mini is tiny's alias
+    altname.set('wide', 'squish');
+    altname.set('thin', 'stretch');
   }
 
   function getModCondition(s:String):Bool
@@ -612,10 +608,10 @@ class Modchart
     return [];
   }
 
-  public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultscale:Float, isSus:Bool):Array<Float>
+  public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultScale:Array<Float>, isSus:Bool):Array<Float>
   {
-    var x:Float = defaultscale;
-    var y:Float = defaultscale;
+    var x:Float = defaultScale[0];
+    var y:Float = defaultScale[1];
 
     x += getValue('scale') + getValue('scale$iCol') + getValue('scalex$iCol') + getValue('scalex');
     y += getValue('scale') + getValue('scale$iCol') + getValue('scaley$iCol') + getValue('scaley');

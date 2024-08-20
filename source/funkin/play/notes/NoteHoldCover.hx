@@ -17,6 +17,7 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
 
   static var glowFrames:FlxFramesCollection;
 
+  public var defaultScale:Array<Float>;
   public var holdNote:SustainTrail;
 
   var glow:FlxSprite;
@@ -27,6 +28,7 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
     super(0, 0);
 
     setup();
+    defaultScale = [scale.x, scale.y];
   }
 
   public static function preloadFrames():Void

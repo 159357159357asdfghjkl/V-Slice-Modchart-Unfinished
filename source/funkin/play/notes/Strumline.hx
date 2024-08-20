@@ -495,7 +495,7 @@ class Strumline extends FlxSpriteGroup
       note.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
       note.x = mods.GetXPos(col, realofs, modNumber, xoffArray);
       note.y = (this.y - INITIAL_OFFSET + ypos);
-      var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle._data.assets.note.scale * (STRUMLINE_SIZE / note.frameWidth), false);
+      var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, note.defaultScale, false);
       var zoom:Float = mods.GetZoom(col, realofs, modNumber);
       var perspective = Modchart.UpdatePerspective(note.x, note.y, note.z);
       note.scale.x = scale[0] * zoom;
@@ -524,7 +524,7 @@ class Strumline extends FlxSpriteGroup
         var ypos = mods.GetYPos(col, realofs, modNumber, xoffArray);
         holdNote.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
         holdNote.x = xpos;
-        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle.fetchHoldNoteScale(), true);
+        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, holdNote.defaultScale, true);
         var zoom:Float = mods.GetZoom(col, realofs, modNumber);
         if (Preferences.downscroll)
         {
@@ -569,7 +569,7 @@ class Strumline extends FlxSpriteGroup
         var ypos = mods.GetYPos(col, realofs, modNumber, xoffArray);
         holdNote.z = mods.GetZPos(col, realofs, modNumber, xoffArray);
         holdNote.x = xpos;
-        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, noteStyle.fetchHoldNoteScale(), true);
+        var scale:Array<Float> = mods.GetScale(col, realofs, modNumber, holdNote.defaultScale, true);
         var zoom:Float = mods.GetZoom(col, realofs, modNumber);
         if (Preferences.downscroll)
         {
@@ -612,8 +612,7 @@ class Strumline extends FlxSpriteGroup
       strumNote.z = mods.GetZPos(col, 0, modNumber, xoffArray);
       strumNote.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       strumNote.y = (yoff + realofs);
-      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, (Std.int(Strumline.STRUMLINE_SIZE * noteStyle.getStrumlineScale()) / strumNote.frameWidth),
-        false);
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, strumNote.defaultScale, false);
       var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(strumNote.x, strumNote.y, strumNote.z);
       strumNote.scale.x = scale[0] * zoom;
@@ -639,7 +638,7 @@ class Strumline extends FlxSpriteGroup
 
       splash.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       splash.y = (yoff + realofs);
-      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, 1, false);
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, splash.defaultScale, false);
       var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(splash.x, splash.y, splash.z);
       splash.scale.x = scale[0] * zoom;
@@ -664,7 +663,7 @@ class Strumline extends FlxSpriteGroup
       cover.z = mods.GetZPos(col, 0, modNumber, xoffArray);
       cover.x = mods.GetXPos(col, 0, modNumber, xoffArray);
       cover.y = yoff + realofs;
-      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, 1, false);
+      var scale:Array<Float> = mods.GetScale(col, 0, modNumber, cover.defaultScale, false);
       var zoom:Float = mods.GetZoom(col, 0, modNumber);
       var perspective = Modchart.UpdatePerspective(cover.x, cover.y, cover.z);
       cover.scale.x = scale[0] * zoom;
