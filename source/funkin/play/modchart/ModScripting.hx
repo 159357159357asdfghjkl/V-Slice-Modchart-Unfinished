@@ -19,20 +19,6 @@ class ModScripting
     }
   }
 
-  public function beatCallback(beat:Float, func) {}
-
-  public function stepCallback(step:Float, func) {}
-
-  public function modPerframe(beat:Float, endBeat:Float, func:(Float) -> Void) {}
-
-  public function modEase() {}
-
-  public function stepEase() {}
-
-  public function beatSet() {}
-
-  public function stepSet() {}
-
   public function setdefault(name:String, val:Float, ?pn:Int)
   {
     if (util.modExist(name)) util.fromPN(pn, (a:Strumline) -> {

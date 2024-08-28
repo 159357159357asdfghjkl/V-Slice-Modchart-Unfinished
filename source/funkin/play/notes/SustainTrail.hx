@@ -38,6 +38,7 @@ class SustainTrail extends FlxSprite
   public var column:Int = 0;
   public var z:Float = 0;
   public var defaultScale:Array<Float>;
+  public var reverseStuff:Float = 1;
 
   /**
    * Set to `true` if the user hit the note and is currently holding the sustain.
@@ -149,7 +150,7 @@ class SustainTrail extends FlxSprite
   override function update(elapsed)
   {
     super.update(elapsed);
-    if (previousScrollSpeed != (parentStrumline?.scrollSpeed ?? 1.0))
+    if (previousScrollSpeed != parentStrumline?.scrollSpeed ?? 1.0)
     {
       triggerRedraw();
     }

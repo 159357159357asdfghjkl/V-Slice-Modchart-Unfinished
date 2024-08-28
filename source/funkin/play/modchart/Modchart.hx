@@ -5,6 +5,7 @@ import flixel.math.FlxMath;
 import flixel.math.FlxAngle;
 import openfl.geom.Vector3D;
 import funkin.play.notes.Strumline;
+import funkin.play.notes.SustainTrail;
 import flixel.math.FlxPoint;
 
 /**
@@ -25,10 +26,10 @@ class Modchart
 
   public static var ROWS_PER_BEAT:Int = 48;
   public static var BEATS_PER_MEASURE:Int = 4;
-  // its 48 in ITG but idk because FNF doesnt work w/ note rows
+
   public static var ROWS_PER_MEASURE:Int = ROWS_PER_BEAT * BEATS_PER_MEASURE;
 
-  public static var MAX_NOTE_ROW:Int = 1 << 30; // from Stepmania
+  public static var MAX_NOTE_ROW:Int = 1 << 30;
 
   final ARROW_SIZE = Strumline.NOTE_SPACING;
   final STEPMANIA_ARROW_SIZE = 64;
@@ -41,6 +42,16 @@ class Modchart
   {
     return Math.max((low), Math.min((val), (high)));
   }
+
+  inline function iClamp(n:Int, l:Int, h:Int):Int
+  {
+    if (n > h) n = h;
+    if (n < l) n = l;
+    return n;
+  }
+
+  inline function fmodf(x:Float, y:Float):Float // should i use this?
+    return x - Math.floor(x / y) * y;
 
   inline function BeatToNoteRow(beat:Float):Int
     return Math.round(beat * ROWS_PER_BEAT);
@@ -111,6 +122,7 @@ class Modchart
   var dim_z:Int = 2;
   var expandSeconds:Float = 0;
   var tanExpandSeconds:Float = 0;
+  var beatFactor:Array<Float> = [];
 
   public function CalculateNoteYPos(conductor:Conductor, strumTime:Float, vwoosh:Bool = true, scrollSpeed:Float):Float
   {
@@ -139,6 +151,15 @@ class Modchart
     return Std.int((f + fRoundInterval / 2) / fRoundInterval) * fRoundInterval;
   }
 
+  function GetCenterLine():Float
+  {
+    /* Another mini hack: if EFFECT_MINI is on, then our center line is at
+     * eg. 320, not 160. */
+    var fMiniPercent:Float = getValue('mini');
+    var fZoom:Float = 1 - fMiniPercent * 0.5;
+    return 160.0 / fZoom;
+  }
+
   public function initMods()
   {
     var mods:Array<String> = [
@@ -146,19 +167,21 @@ class Modchart
       'tandrunk', 'tandrunkspeed', 'tandrunkoffset', 'tandrunkperiod', 'drunkz', 'drunkzspeed', 'drunkzoffset', 'drunkzperiod', 'tandrunkz', 'tandrunkzspeed',
       'tandrunkzoffset', 'tandrunkzperiod', 'tanexpand', 'tanexpandperiod', 'tipsy', 'tipsyspeed', 'tipsyoffset', 'tantipsy', 'tantipsyspeed',
       'tantipsyoffset', 'tornado', 'tornadooffset', 'tornadoperiod', 'tantornado', 'tantornadooffset', 'tantornadoperiod', 'tornadoz', 'tornadozoffset',
-      'tornadozperiod', 'tantornadoz', 'tantornadozoffset', 'tantornadozperiod', 'mini', 'movex', 'movey', 'movez', 'movexoffset', 'moveyoffset',
-      'movezoffset', 'xmod', 'cmod', 'mmod', 'randomspeed', 'reverse', 'split', 'alternate', 'cross', 'centered', 'swap', 'attenuatex', 'attenuatey',
-      'attenuatez', 'beat', 'beatoffset', 'beatmult', 'beatperiod', 'beaty', 'beatyoffset', 'beatymult', 'beatyperiod', 'beatz', 'beatzoffset', 'beatzmult',
-      'beatzperiod', 'bumpyx', 'bumpyxoffset', 'bumpyxperiod', 'tanbumpyx', 'tanbumpyxoffset', 'tanbumpyxperiod', 'bumpy', 'bumpyoffset', 'bumpyperiod',
-      'tanbumpy', 'tanbumpyoffset', 'tanbumpyperiod', 'flip', 'invert', 'zigzag', 'zigzagoffset', 'zigzagperiod', 'zigzagz', 'zigzagzoffset', 'zigzagzperiod',
-      'sawtooth', 'sawtoothperiod', 'sawtoothz', 'sawtoothzperiod', 'parabolax', 'parabolaz', 'digital', 'digitalsteps', 'digitaloffset', 'digitalperiod',
-      'tandigital', 'tandigitalsteps', 'tandigitaloffset', 'tandigitalperiod', 'digitalz', 'digitalzsteps', 'digitalzoffset', 'digitalzperiod', 'tandigitalz',
-      'tandigitalzsteps', 'tandigitalzoffset', 'tandigitalzperiod', 'square', 'squareoffset', 'squareperiod', 'squarez', 'squarezoffset', 'squarezperiod',
-      'bounce', 'bounceoffset', 'bounceperiod', 'bouncez', 'bouncezoffset', 'bouncezperiod', 'xmode', 'tiny', 'tipsyx', 'tipsyxspeed', 'tipsyxoffset',
-      'tantipsyx', 'tantipsyxspeed', 'tantipsyxoffset', 'tipsyz', 'tipsyzspeed', 'tipsyzoffset', 'tantipsyz', 'tantipsyzspeed', 'tantipsyzoffset', 'drunky',
-      'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod', 'invertsine', 'scale', 'scalex',
-      'scaley', 'squish', 'stretch', 'zoom', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod', 'shrinkmult', 'shrinklinear', 'cosecant',
-      'stealthpastreceptors'
+      'tornadozperiod', 'tantornadoz', 'tantornadozoffset', 'tantornadozperiod', 'tornadoy', 'tornadoyoffset', 'tornadoyperiod', 'tantornadoy',
+      'tantornadoyoffset', 'tantornadoyperiod', 'mini', 'movex', 'movey', 'movez', 'movexoffset', 'moveyoffset', 'movezoffset', 'movexoffset1',
+      'moveyoffset1', 'movezoffset1', 'xmod', 'cmod', 'mmod', 'randomspeed', 'reverse', 'split', 'divide', 'alternate', 'cross', 'centered', 'swap',
+      'attenuatex', 'attenuatey', 'attenuatez', 'beat', 'beatoffset', 'beatmult', 'beatperiod', 'beaty', 'beatyoffset', 'beatymult', 'beatyperiod', 'beatz',
+      'beatzoffset', 'beatzmult', 'beatzperiod', 'bumpyx', 'bumpyxoffset', 'bumpyxperiod', 'tanbumpyx', 'tanbumpyxoffset', 'tanbumpyxperiod', 'bumpyy',
+      'bumpyyoffset', 'bumpyyperiod', 'tanbumpyy', 'tanbumpyyoffset', 'tanbumpyyperiod', 'bumpy', 'bumpyoffset', 'bumpyperiod', 'tanbumpy', 'tanbumpyoffset',
+      'tanbumpyperiod', 'flip', 'invert', 'zigzag', 'zigzagoffset', 'zigzagperiod', 'zigzagz', 'zigzagzoffset', 'zigzagzperiod', 'sawtooth', 'sawtoothperiod',
+      'sawtoothz', 'sawtoothzperiod', 'parabolax', 'parabolaz', 'digital', 'digitalsteps', 'digitaloffset', 'digitalperiod', 'tandigital', 'tandigitalsteps',
+      'tandigitaloffset', 'tandigitalperiod', 'digitalz', 'digitalzsteps', 'digitalzoffset', 'digitalzperiod', 'tandigitalz', 'tandigitalzsteps',
+      'tandigitalzoffset', 'tandigitalzperiod', 'square', 'squareoffset', 'squareperiod', 'squarez', 'squarezoffset', 'squarezperiod', 'bounce',
+      'bounceoffset', 'bounceperiod', 'bouncey', 'bounceyoffset', 'bounceyperiod', 'bouncez', 'bouncezoffset', 'bouncezperiod', 'xmode', 'tiny', 'tipsyx',
+      'tipsyxspeed', 'tipsyxoffset', 'tantipsyx', 'tantipsyxspeed', 'tantipsyxoffset', 'tipsyz', 'tipsyzspeed', 'tipsyzoffset', 'tantipsyz', 'tantipsyzspeed',
+      'tantipsyzoffset', 'drunky', 'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod',
+      'invertsine', 'vibrate', 'scale', 'scalex', 'scaley', 'squish', 'stretch', 'zoom', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod',
+      'shrinkmult', 'shrinklinear', 'cosecant', 'stealthpastreceptors'
     ];
 
     for (i in 0...4)
@@ -170,6 +193,9 @@ class Modchart
       mods.push('movexoffset$i');
       mods.push('moveyoffset$i');
       mods.push('movezoffset$i');
+      mods.push('movexoffset1$i');
+      mods.push('moveyoffset1$i');
+      mods.push('movezoffset1$i');
       mods.push('tiny$i');
       mods.push('bumpy$i');
       mods.push('scalex$i');
@@ -194,19 +220,16 @@ class Modchart
     altname.set('decel', 'brake');
     altname.set('drift', 'drunk');
     altname.set('float', 'tipsy');
+
     altname.set('tipz', 'tipsyz');
     altname.set('tipzspeed', 'tipsyzspeed');
     altname.set('tipzoffset', 'tipsyzoffset');
-
-    altname.set('mini-old', 'tiny'); // in old versions mini is tiny's alias
-    altname.set('wide', 'squish');
-    altname.set('thin', 'stretch');
   }
 
   function getModCondition(s:String):Bool
     return modList.exists(s) && getValue(s) != 0;
 
-  function getValue(s:String)
+  public function getValue(s:String):Float
     return modList.get(s);
 
   public function modNameExists(s:String):Bool
@@ -214,8 +237,6 @@ class Modchart
 
   public function getName(s:String)
     return altname.exists(s) ? altname.get(s) : s;
-
-  var beatFactor:Array<Float> = [];
 
   function UpdateTipsy(time:Float, offset:Float, speed:Float, col:Int, ?tan:Float = 0)
   {
@@ -225,30 +246,11 @@ class Modchart
       + (col * ((offset * 1.8) + 1.8)), getValue('cosecant')) * arrow_times_mag);
   }
 
-  public function update(elapsed:Float):Void
-  {
-    var lastTime:Float = 0;
-    var time:Float = Conductor.instance.songPosition / 1000 * 4294.967296 / 1000000; // fast time math
-    expandSeconds += time - lastTime;
-    expandSeconds %= ((Math.PI * 2) / (getValue('expandperiod') + 1));
-    tanExpandSeconds += time - lastTime;
-    tanExpandSeconds %= ((Math.PI * 2) / (getValue('tanexpandperiod') + 1));
-
-    UpdateBeat(dim_x, Conductor.instance.currentBeat, getValue('beatoffset'), getValue('beatmult'));
-
-    // Update BeatY
-    UpdateBeat(dim_y, Conductor.instance.currentBeat, getValue('beatyoffset'), getValue('beatymult'));
-
-    // Update BeatZ
-    UpdateBeat(dim_z, Conductor.instance.currentBeat, getValue('beatzoffset'), getValue('beatzmult'));
-    lastTime = time;
-  }
-
-  function UpdateBeat(d:Int, beat:Float, beat_offset:Float, beat_mult:Float)
+  function UpdateBeat(d:Int, beat_offset:Float, beat_mult:Float)
   {
     var fAccelTime:Float = 0.2;
     var fTotalTime:Float = 0.5;
-    var fBeat:Float = ((beat + fAccelTime + beat_offset) * (beat_mult + 1));
+    var fBeat:Float = ((Conductor.instance.currentBeat + fAccelTime + beat_offset) * (beat_mult + 1));
     var bEvenBeat:Bool = (Std.int(fBeat) % 2) != 0;
     beatFactor[d] = 0;
     if (fBeat < 0) return;
@@ -271,60 +273,21 @@ class Modchart
     beatFactor[d] *= 20.0;
   }
 
-  function CalculateTornadoOffsetFromMagnitude(dimension:Int, col_id:Int, magnitude:Float, effect_offset:Float, period:Float, xOffset:Array<Float>,
-      field_zoom:Float, y_offset:Float, ?tan:Float = 0):Float
+  public function update(elapsed:Float):Void
   {
-    var minTornado:Float = 0;
-    var maxTornado:Float = 0;
-
-    var per:Int = 4;
-    var wide_field:Bool = per > 4;
-    var max_player_col:Int = per - 1;
-    for (dimension in 0...3)
-    {
-      var width:Int = 3;
-      // wide_field only matters for x, which is dimension 0. -Kyz
-      if (dimension == 0 && wide_field)
-      {
-        width = 2;
-      }
-      for (col in 0...3)
-      {
-        var start_col:Int = col - width;
-        var end_col:Int = col + width;
-        start_col = Std.int(clamp(start_col, 0, max_player_col));
-        end_col = Std.int(clamp(end_col, 0, max_player_col));
-        minTornado = FlxMath.MAX_VALUE_FLOAT;
-        maxTornado = FlxMath.MIN_VALUE_FLOAT;
-        for (i in start_col...end_col)
-        {
-          // Using the x offset when the dimension might be y or z feels so
-          // wrong, but it provides min and max values when otherwise the
-          // limits would just be zero, which would make it do nothing. -Kyz
-          minTornado = Math.min(xOffset[col_id], minTornado);
-          maxTornado = Math.max(xOffset[col_id], maxTornado);
-        }
-      }
-    }
-    //
-    var tornado_position_scale_to_low:Float = -1;
-    var tornado_position_scale_to_high:Float = 1;
-    var tornado_offset_frequency:Float = 6;
-    var tornado_offset_scale_from_low:Float = -1;
-    var tornado_offset_scale_from_high:Float = 1;
-    var real_pixel_offset:Float = xOffset[col_id] * field_zoom;
-    var position_between:Float = scale(real_pixel_offset, minTornado * field_zoom, maxTornado * field_zoom, tornado_position_scale_to_low,
-      tornado_position_scale_to_high);
-    var rads:Float = Math.acos(position_between);
-    var frequency:Float = tornado_offset_frequency;
-    rads += (y_offset + effect_offset) * ((period * frequency) + frequency) / SCREEN_HEIGHT;
-    var processed_rads:Float = (tan == 0 ? FlxMath.fastCos(rads) : selectTanType(rads, getValue('cosecant')));
-    var adjusted_pixel_offset:Float = scale(processed_rads, tornado_offset_scale_from_low, tornado_offset_scale_from_high, minTornado * field_zoom,
-      maxTornado * field_zoom);
-    return (adjusted_pixel_offset - real_pixel_offset) * magnitude;
+    var lastTime:Float = 0;
+    var time:Float = Conductor.instance.songPosition / 1000 * 4294.967296 / 1000000; // fast time math
+    expandSeconds += time - lastTime;
+    expandSeconds %= ((Math.PI * 2) / (getValue('expandperiod') + 1));
+    tanExpandSeconds += time - lastTime;
+    tanExpandSeconds %= ((Math.PI * 2) / (getValue('tanexpandperiod') + 1));
+    UpdateBeat(dim_x, getValue('beatoffset'), getValue('beatmult'));
+    UpdateBeat(dim_y, getValue('beatyoffset'), getValue('beatymult'));
+    UpdateBeat(dim_z, getValue('beatzoffset'), getValue('beatzmult'));
+    lastTime = time;
   }
 
-  public function GetYOffset(conductor:Conductor, time:Float, speed:Float, vwoosh:Bool, iCol:Int):Float
+  public function GetYOffset(conductor:Conductor, time:Float, speed:Float, vwoosh:Bool, iCol:Int, note:flixel.FlxSprite):Float
   {
     var fScrollSpeed:Float = speed;
     if (getModCondition('expand'))
@@ -384,9 +347,9 @@ class Modchart
     }
     fYAdjust *= Preferences.downscroll ? -1 : 1;
     fYOffset += fYAdjust;
-
     if (getModCondition('boomerang')) fYOffset = ((-1 * fYOffset * fYOffset / SCREEN_HEIGHT) + 1.5 * fYOffset) * getValue('boomerang');
-
+    var reverseStuff:Float = (1 - 2 * GetReversePercentForColumn(iCol));
+    fYOffset *= reverseStuff;
     return fYOffset;
   }
 
@@ -394,8 +357,8 @@ class Modchart
   {
     var f:Float = 0;
     var iNumCols:Int = 4;
-    if (getModCondition('reverse')) f += getValue('reverse');
-    if (getModCondition('reverse${iCol}')) f += getValue('reverse${iCol}');
+    f += getValue('reverse');
+    f += getValue('reverse${iCol}');
 
     if (iCol >= iNumCols / 2) f += getValue('split');
     if ((iCol % 2) == 1) f += getValue('alternate');
@@ -412,19 +375,23 @@ class Modchart
   {
     var time:Float = (Conductor.instance.songPosition / 1000);
     var f:Float = xOffset[iCol] * 1;
-    if (getModCondition('movex$iCol')) f += ARROW_SIZE * getValue('movex${iCol}') + getValue('movexoffset$iCol');
-    if (getModCondition('movex')) f += ARROW_SIZE * getValue('movex') + getValue('movexoffset');
-    if (getModCondition('tornado')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tornado'), getValue('tornadooffset'),
-      getValue('tornadoperiod'), xOffset, 1, fYOffset);
-    if (getModCondition('tantornado')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tantornado'), getValue('tantornadooffset'),
-      getValue('tantornadoperiod'), xOffset, 1, fYOffset, 1);
+    if (getModCondition('movex$iCol') || getModCondition('movexoffset$iCol') || getModCondition('movexoffset1$iCol')) f += ARROW_SIZE * getValue('movex${iCol}')
+      + getValue('movexoffset$iCol') + getValue('movexoffset1$iCol');
+    if (getModCondition('movex') || getModCondition('movexoffset') || getModCondition('movexoffset1')) f += ARROW_SIZE * getValue('movex')
+      + getValue('movexoffset') + getValue('movexoffset1');
+    if (getModCondition('vibrate')) f += (Math.random() - 0.5) * getValue('vibrate') * 20;
     if (getModCondition('drunk')) f += getValue('drunk') * FlxMath.fastCos(CalculateDrunkAngle(time, getValue('drunkspeed'), iCol, getValue('drunkoffset'),
       0.2, fYOffset, getValue('drunkperiod'), 10)) * ARROW_SIZE * 0.5;
     if (getModCondition('tandrunk')) f += getValue('tandrunk') * selectTanType(CalculateDrunkAngle(time, getValue('tandrunkspeed'), iCol,
       getValue('tandrunkoffset'), 0.2, fYOffset, getValue('tandrunkperiod'), 10),
       getValue('cosecant')) * ARROW_SIZE * 0.5;
     if (getModCondition('attenuatex')) f += getValue('attenuatex') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE) * (xOffset[iCol] / ARROW_SIZE);
-    if (getModCondition('beat')) f += getValue('beat') * (beatFactor[dim_x] * FlxMath.fastSin(fYOffset / ((getValue('beatperiod') * 15) + 15) + Math.PI / 2));
+    if (getModCondition('beat'))
+    {
+      var fShift:Float = beatFactor[dim_x] * Math.sin(((fYOffset / (getValue('beatperiod') * 30.0 + 30.0))) + (Math.PI / 2));
+      f += getValue('beat') * fShift;
+    }
+
     if (getModCondition('bumpyx')) f += getValue('bumpyx') * 40 * FlxMath.fastSin(CalculateBumpyAngle(fYOffset, getValue('bumpyxoffset'),
       getValue('bumpyxperiod')));
     if (getModCondition('tanbumpyx')) f += getValue('tanbumpyx') * 40 * selectTanType(CalculateBumpyAngle(fYOffset, getValue('tanbumpyxoffset'),
@@ -440,6 +407,7 @@ class Modchart
       var fDistance:Float = fNewPixelOffset - fOldPixelOffset;
       f += fDistance * getValue('flip');
     }
+    if (getModCondition('divide')) f += getValue('divide') * (ARROW_SIZE * (iCol >= 2 ? 1 : -1));
     if (getModCondition('invert')) f += getValue('invert') * (ARROW_SIZE * ((iCol % 2 == 0) ? 1 : -1));
     if (getModCondition('zigzag'))
     {
@@ -450,16 +418,13 @@ class Modchart
     if (getModCondition('sawtooth')) f += (getValue('sawtooth') * ARROW_SIZE) * ((0.5 / (getValue('sawtoothperiod') + 1) * fYOffset) / ARROW_SIZE
       - Math.floor((0.5 / (getValue('sawtoothperiod') + 1) * fYOffset) / ARROW_SIZE));
     if (getModCondition('parabolax')) f += getValue('parabolax') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE);
-
     if (getModCondition('digital')) f += (getValue('digital') * ARROW_SIZE * 0.5) * Math.round((getValue('digitalsteps') +
       1) * FlxMath.fastSin(CalculateDigitalAngle(fYOffset, getValue('digitaloffset'), getValue('digitalperiod')))) / (getValue('digitalsteps')
       + 1);
-
     if (getModCondition('tandigital')) f += (getValue('tandigital') * ARROW_SIZE * 0.5) * Math.round((getValue('tandigitalsteps') +
       1) * selectTanType(CalculateDigitalAngle(fYOffset, getValue('tandigitaloffset'), getValue('tandigitalperiod')),
         getValue('cosecant'))) / (getValue('tandigitalsteps')
       + 1);
-
     if (getModCondition('square'))
     {
       var fResult:Float = square((Math.PI * (fYOffset + (1.0 * (getValue('squareoffset')))) / (ARROW_SIZE + (getValue('squareperiod') * ARROW_SIZE))));
@@ -485,6 +450,55 @@ class Modchart
     if (getModCondition('swap')) f += FlxG.width / 2 * getValue('swap') * (pn == 0 ? -1 : 1);
     if (getModCondition('invertsine')) f += FlxMath.fastSin(0 +
       (fYOffset * 0.004)) * (ARROW_SIZE * (iCol % 2 == 0 ? 1 : -1) * getValue('invertsine') * 0.5); // from modcharting tools
+    if (getModCondition('tornado'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+
+      // TODO: Don't index by PlayerNumber.
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+      fRads += (fYOffset + getValue('tornadooffset')) * ((6 * getValue('tornadoperiod')) + 6) / SCREEN_HEIGHT;
+      var fAdjustedPixelOffset:Float = scale(FlxMath.fastCos(fRads), -1, 1, fMinX, fMaxX);
+
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tornado');
+    }
+    if (getModCondition('tantornado'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+
+      // TODO: Don't index by PlayerNumber.
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+
+      fRads += (fYOffset + getValue('tantornadooffset')) * ((6 * getValue('tantornadoperiod')) + 6) / SCREEN_HEIGHT;
+      var fAdjustedPixelOffset:Float = scale(selectTanType(fRads, getValue('cosecant')), -1, 1, fMinX, fMaxX);
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tantornado');
+    }
     return f;
   }
 
@@ -492,8 +506,24 @@ class Modchart
   {
     var f:Float = fYOffset;
     var time:Float = (Conductor.instance.songPosition / 1000);
-    if (getModCondition('movey$iCol')) f += ARROW_SIZE * getValue('movey$iCol') + getValue('moveyoffset$iCol');
-    if (getModCondition('movey')) f += ARROW_SIZE * getValue('movey') + getValue('moveyoffset');
+
+    // XXX: Hack: we need to scale the reverse shift by the zoom.
+    var fMiniPercent:Float = getValue('mini');
+    var fZoom:Float = 1 - fMiniPercent * 0.5;
+
+    // don't divide by 0
+    if (Math.abs(fZoom) < 0.01) fZoom = 0.01;
+
+    var fPercentReverse:Float = GetReversePercentForColumn(iCol);
+    var fShift:Float = 514 * fPercentReverse;
+    var fPercentCentered:Float = getValue('centered');
+    fShift = scale(fPercentCentered, 0., 1., fShift, 0.0);
+    f += fShift;
+
+    if (getModCondition('movey$iCol') || getModCondition('moveyoffset$iCol') || getModCondition('moveyoffset1$iCol')) f += ARROW_SIZE * getValue('movey$iCol')
+      + getValue('moveyoffset$iCol') + getValue('moveyoffset1$iCol');
+    if (getModCondition('movey') || getModCondition('moveyoffset') || getModCondition('moveyoffset1')) f += ARROW_SIZE * getValue('movey')
+      + getValue('moveyoffset') + getValue('moveyoffset1');
     if (getModCondition('attenuatey')) f += getValue('attenuatey') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE) * (xOffset[iCol] / ARROW_SIZE);
     if (getModCondition('tipsy')) f += getValue('tipsy') * UpdateTipsy(time, getValue('tipsyoffset'), getValue('tipsyspeed'), iCol);
     if (getModCondition('tantipsy')) f += getValue('tantipsy') * UpdateTipsy(time, getValue('tantipsyoffset'), getValue('tantipsyspeed'), iCol, 1);
@@ -504,22 +534,71 @@ class Modchart
     if (getModCondition('tandrunk')) f += getValue('tandrunky') * selectTanType(CalculateDrunkAngle(time, getValue('tandrunkyspeed'), iCol,
       getValue('tandrunkyoffset'), 0.2, fYOffset, getValue('tandrunkyperiod'), 10),
       getValue('cosecant')) * ARROW_SIZE * 0.5;
-    /*
-      // XXX: Hack: we need to scale the reverse shift by the zoom.
-      var fMiniPercent:Float = getValue('mini');
-      var fZoom:Float = 1 - fMiniPercent * 0.5;
+    if (getModCondition('bouncey'))
+    {
+      var fBounceAmt:Float = Math.abs(FlxMath.fastSin(((fYOffset + (1.0 * (getValue('bounceyoffset')))) / (60 + (getValue('bounceyperiod') * 60)))));
 
-      // don't divide by 0
-      if (Math.abs(fZoom) < 0.01) fZoom = 0.01;
+      f += getValue('bouncey') * ARROW_SIZE * 0.5 * fBounceAmt;
+    }
+    if (getModCondition('bumpyy')) f += getValue('bumpyy') * 40 * FlxMath.fastSin(CalculateBumpyAngle(fYOffset, getValue('bumpyyoffset'),
+      getValue('bumpyyperiod')));
+    if (getModCondition('tanbumpyy')) f += getValue('tanbumpyy') * 40 * selectTanType(CalculateBumpyAngle(fYOffset, getValue('tanbumpyyoffset'),
+      getValue('tanbumpyyperiod')), getValue('cosecant'));
+    if (getModCondition('tornadoy'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
 
-      var fPercentReverse:Float = GetReversePercentForColumn(iCol);
-      var fShift:Float = scale(fPercentReverse, 0., 1., Constants.STRUMLINE_Y_OFFSET, FlxG.height - curHeight - Constants.STRUMLINE_Y_OFFSET);
-      var fPercentCentered = getValue('centered');
-      fShift = scale(fPercentCentered, 0., 1., fShift, 0.0);
-      var fScale = scale(GetReversePercentForColumn(iCol), 0., 1., 1., -1.);
-      f += fShift;
-      f *= fScale; */
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+      // TODO: Don't index by PlayerNumber.
 
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+      fRads += (fYOffset + getValue('tornadoyoffset')) * ((6 * getValue('tornadoyperiod')) + 6) / SCREEN_HEIGHT;
+
+      var fAdjustedPixelOffset:Float = scale(FlxMath.fastCos(fRads), -1, 1, fMinX, fMaxX);
+
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tornadoy');
+    }
+    if (getModCondition('tantornadoy'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
+
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+
+      // TODO: Don't index by PlayerNumber.
+
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+      fRads += (fYOffset + getValue('tantornadoyoffset')) * ((6 * getValue('tantornadoyperiod')) + 6) / SCREEN_HEIGHT;
+
+      var fAdjustedPixelOffset:Float = scale(selectTanType(fRads, getValue('cosecant')), -1, 1, fMinX, fMaxX);
+
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tantornadoy');
+    }
     return f;
   }
 
@@ -527,12 +606,65 @@ class Modchart
   {
     var f:Float = 0;
     var time:Float = (Conductor.instance.songPosition / 1000);
-    if (getModCondition('movez$iCol')) f += ARROW_SIZE * getValue('movez$iCol') + getValue('movezoffset$iCol');
-    if (getModCondition('movez')) f += ARROW_SIZE * getValue('movez') + getValue('movezoffset');
-    if (getModCondition('tornadoz')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tornadoz'), getValue('tornadozoffset'),
-      getValue('tornadozperiod'), xOffset, 1, fYOffset);
-    if (getModCondition('tantornadoz')) f += CalculateTornadoOffsetFromMagnitude(dim_x, iCol, getValue('tantornadoz'), getValue('tantornadozoffset'),
-      getValue('tantornadozperiod'), xOffset, 1, fYOffset, 1);
+    if (getModCondition('movez$iCol') || getModCondition('movezoffset$iCol') || getModCondition('movezoffset1$iCol')) f += ARROW_SIZE * getValue('movez$iCol')
+      + getValue('movezoffset$iCol') + getValue('movezoffset1$iCol');
+    if (getModCondition('movez') || getModCondition('movezoffset') || getModCondition('movezoffset1')) f += ARROW_SIZE * getValue('movez')
+      + getValue('movezoffset') + getValue('movezoffset1');
+    if (getModCondition('tornadoz'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
+
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+      // TODO: Don't index by PlayerNumber.
+
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+      fRads += (fYOffset + getValue('tornadozoffset')) * ((6 * getValue('tornadozperiod')) + 6) / SCREEN_HEIGHT;
+
+      var fAdjustedPixelOffset:Float = scale(FlxMath.fastCos(fRads), -1, 1, fMinX, fMaxX);
+
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tornadoz');
+    }
+    if (getModCondition('tantornadoz'))
+    {
+      var iTornadoWidth:Int = 2;
+      var iStartCol:Int = iCol - iTornadoWidth;
+      var iEndCol:Int = iCol + iTornadoWidth;
+      iStartCol = iClamp(iStartCol, 0, 3);
+      iEndCol = iClamp(iEndCol, 0, 3);
+
+      var fMinX:Float = 3.402823466e+38;
+      var fMaxX:Float = 1.175494351e-38;
+
+      // TODO: Don't index by PlayerNumber.
+
+      for (i in iStartCol...iEndCol + 1)
+      {
+        fMinX = Math.min(fMinX, xOffset[i]);
+        fMaxX = Math.max(fMaxX, xOffset[i]);
+      }
+
+      var fRealPixelOffset:Float = xOffset[iCol];
+      var fPositionBetween:Float = scale(fRealPixelOffset, fMinX, fMaxX, -1, 1);
+      var fRads:Float = Math.acos(fPositionBetween);
+      fRads += (fYOffset + getValue('tantornadozoffset')) * ((6 * getValue('tantornadozperiod')) + 6) / SCREEN_HEIGHT;
+
+      var fAdjustedPixelOffset:Float = scale(selectTanType(fRads, getValue('cosecant')), -1, 1, fMinX, fMaxX);
+
+      f += (fAdjustedPixelOffset - fRealPixelOffset) * getValue('tantornadoz');
+    }
     if (getModCondition('drunkz')) f += getValue('drunkz') * FlxMath.fastCos(CalculateDrunkAngle(time, getValue('drunkzspeed'), iCol,
       getValue('drunkzoffset'), 0.2, fYOffset, getValue('drunkzperiod'), 10)) * ARROW_SIZE * 0.5;
     if (getModCondition('tandrunkz')) f += getValue('tandrunkz') * selectTanType(CalculateDrunkAngle(time, getValue('tandrunkzspeed'), iCol,
@@ -590,7 +722,7 @@ class Modchart
     return [];
   }
 
-  public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultScale:Array<Float>, isSus:Bool):Array<Float>
+  public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultScale:Array<Float>):Array<Float>
   {
     var x:Float = defaultScale[0];
     var y:Float = defaultScale[1];
@@ -609,8 +741,6 @@ class Modchart
     x *= (FlxMath.fastSin(angle * Math.PI / 180) * stretchY) + (FlxMath.fastCos(angle * Math.PI / 180) * stretchX);
     y *= (FlxMath.fastCos(angle * Math.PI / 180) * stretchY) + (FlxMath.fastSin(angle * Math.PI / 180) * stretchX);
     y *= (FlxMath.fastCos(angle * Math.PI / 180) * squishY) + (FlxMath.fastSin(angle * Math.PI / 180) * squishX);
-
-    if (isSus) y = 1;
     return [x, y];
   }
 
@@ -648,6 +778,7 @@ class Modchart
       var fTinyPercent = Math.pow(0.5, getValue('tiny$iCol'));
       fZoom *= fTinyPercent;
     }
+    fZoom += getValue('zoom');
     return fZoom;
   }
 
