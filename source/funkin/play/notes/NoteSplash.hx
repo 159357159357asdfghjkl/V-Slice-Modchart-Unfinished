@@ -6,7 +6,7 @@ import flixel.FlxG;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxSprite;
 
-class NoteSplash extends FlxSprite
+class NoteSplash extends funkin.play.modchart.ModchartSprite
 {
   static final ALPHA:Float = 0.6;
   static final FRAMERATE_DEFAULT:Int = 24;

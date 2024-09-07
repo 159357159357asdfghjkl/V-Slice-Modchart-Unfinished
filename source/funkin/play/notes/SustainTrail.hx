@@ -18,7 +18,7 @@ import funkin.ui.options.PreferencesMenu;
  *
  * @author MtH
  */
-class SustainTrail extends FlxSprite
+class SustainTrail extends funkin.play.modchart.ModchartSprite
 {
   /**
    * The triangles corresponding to the hold, followed by the endcap.

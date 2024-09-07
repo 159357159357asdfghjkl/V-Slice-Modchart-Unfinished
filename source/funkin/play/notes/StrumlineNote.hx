@@ -8,7 +8,7 @@ import funkin.play.notes.NoteSprite;
 /**
  * The actual receptor that you see on screen.
  */
-class StrumlineNote extends FlxSprite
+class StrumlineNote extends funkin.play.modchart.ModchartSprite
 {
   public var isPlayer(default, null):Bool;
 

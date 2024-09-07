@@ -7,7 +7,7 @@ import flixel.FlxSprite;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.HSVShader;
 
-class NoteSprite extends FunkinSprite
+class NoteSprite extends funkin.play.modchart.ModchartSprite.FunkinModchartSprite
 {
   static final DIRECTION_COLORS:Array<String> = ['purple', 'blue', 'green', 'red'];
 
