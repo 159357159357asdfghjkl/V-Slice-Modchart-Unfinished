@@ -33,7 +33,7 @@ class ModchartMath
     return n;
   }
 
-  inline public static function fmodf(x:Float, y:Float):Float // should i use this?
+  inline public static function mod(x:Float, y:Float):Float // should i use this?
     return x - Math.floor(x / y) * y;
 
   inline public static function BeatToNoteRow(beat:Float):Int
@@ -81,32 +81,24 @@ class ModchartMath
     }
   }
 
-  // shortcut some steps
-  public static function UpdatePerspective(x:Float, y:Float, z:Float):Vector3D
+  public static function PerspectiveProjection(x:Float, y:Float, z:Float, w:Float, obj:Int):Vector3D
   {
-    var tanHalfFOV:Float = Math.tan(rad * 45);
-    var pos:Vector3D = new Vector3D(x - FlxG.width / 2, y - FlxG.height / 2, z / 1000 - 1);
+    var origin:Vector3D = new Vector3D(FlxG.width / 2, FlxG.height / 2);
+    var zNear:Float = 0;
+    var zFar:Float = 100;
+    var zRange:Float = zNear - zFar;
+    var FOV:Float = 90.0;
+    var tanHalfFOV:Float = Math.tan(rad * (FOV / 2));
+    var pos:Vector3D = new Vector3D(x, y, (z - 1000 * w) / 1000).subtract(origin);
     if (pos.z > 0) pos.z = 0;
-    var newXPos:Float = pos.x * (1 / tanHalfFOV) / -pos.z + FlxG.width / 2;
-    var newYPos:Float = pos.y / (1 / tanHalfFOV) / -pos.z + FlxG.height / 2;
-    var zScale:Float = 1 / -pos.z;
-    return new Vector3D(newXPos, newYPos, zScale);
-  }
-
-  public static function CalculateDrunkAngle(time:Float, speed:Float, col:Int, offset:Float, col_frequency:Float, y_offset:Float, period:Float,
-      offset_frequency:Float):Float
-  {
-    return time * (1 + speed) + col * ((offset * col_frequency) + col_frequency) + y_offset * ((period * offset_frequency) + offset_frequency) / SCREEN_HEIGHT;
-  }
-
-  public static function CalculateBumpyAngle(y_offset:Float, offset:Float, period:Float):Float
-  {
-    return (y_offset + (100.0 * offset)) / ((period * 16.0) + 16.0);
-  }
-
-  public static function CalculateDigitalAngle(y_offset:Float, offset:Float, period:Float):Float
-  {
-    return Math.PI * (y_offset + (1.0 * offset)) / (ARROW_SIZE + (period * ARROW_SIZE));
+    var a:Float = (-zNear - zFar) / zRange;
+    var b:Float = 2.0 * zFar * zNear / zRange;
+    var newZPos:Float = a * -pos.z + b;
+    var newXPos:Float = pos.x / (1 / tanHalfFOV) / newZPos;
+    var newYPos:Float = pos.y / (1 / tanHalfFOV) / newZPos;
+    var zScale:Float = 1 / newZPos;
+    var vector:Vector3D = new Vector3D(newXPos, newYPos, zScale).add(origin);
+    return vector;
   }
 
   inline public static function Quantize(f:Float, fRoundInterval:Float):Float

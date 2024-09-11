@@ -3,6 +3,7 @@ package funkin.play.modchart;
 import funkin.play.notes.Strumline;
 import openfl.geom.Vector3D;
 
+// a scrapped stuff, will be removed in the further update
 class ModScripting
 {
   var game = PlayState.instance;
@@ -19,7 +20,7 @@ class ModScripting
     }
   }
 
-  public function setdefault(name:String, val:Float, ?pn:Int)
+  public function setValue(name:String, val:Float, ?pn:Int)
   {
     if (util.modExist(name)) util.fromPN(pn, (a:Strumline) -> {
       a.mods.modList.set(a.mods.getName(name), val);
