@@ -11,11 +11,12 @@ import openfl.geom.Vector3D;
  * it is in a mess,
  * don't expect it too much!
  * --but who can optimize it or rewrite this shit--
+ * [Don't support many of NotITG mods unless it's open-source]
  */
 class Modchart
 {
-  public var modList:Map<String, Float> = new Map<String, Float>();
-  public var altname:Map<String, String> = new Map<String, String>();
+  private var modList:Map<String, Float> = new Map<String, Float>();
+  private var altname:Map<String, String> = new Map<String, String>();
 
   final ARROW_SIZE:Int = Strumline.NOTE_SPACING;
   final STEPMANIA_ARROW_SIZE:Int = 64;
@@ -87,7 +88,8 @@ class Modchart
       'tipsyxspeed', 'tipsyxoffset', 'tantipsyx', 'tantipsyxspeed', 'tantipsyxoffset', 'tipsyz', 'tipsyzspeed', 'tipsyzoffset', 'tantipsyz', 'tantipsyzspeed',
       'tantipsyzoffset', 'drunky', 'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod',
       'invertsine', 'vibrate', 'scale', 'scalex', 'scaley', 'squish', 'stretch', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod', 'shrinkmult',
-      'shrinklinear', 'noteskewx', 'noteskewy', 'zoomx', 'zoomy', 'tinyx', 'tinyy', 'cosecant'
+      'shrinklinear', 'noteskewx', 'noteskewy', 'zoomx', 'zoomy', 'tinyx', 'tinyy', 'confusionx', 'confusionxoffset', 'confusiony', 'confusionyoffset',
+      'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant'
     ];
     var ONE:Array<String> = ['xmod', 'zoom', 'movew'];
     for (i in 0...4)
@@ -113,6 +115,12 @@ class Modchart
       ZERO.push('noteskewy$i');
       ZERO.push('tinyx$i');
       ZERO.push('tinyy$i');
+      ZERO.push('confusionx$i');
+      ZERO.push('confusiony$i');
+      ZERO.push('confusion$i');
+      ZERO.push('confusionxoffset$i');
+      ZERO.push('confusionyoffset$i');
+      ZERO.push('confusionoffset$i');
       ONE.push('movew$i');
       ONE.push('zoom$i');
     }
@@ -123,6 +131,7 @@ class Modchart
       modList.set(mod, 1);
 
     modList.set('cmod', -1);
+    modList.set('mmod', 45);
     altname.set('land', 'brake');
     altname.set('dwiwave', 'expand');
     altname.set('converge', 'centered');
@@ -138,13 +147,15 @@ class Modchart
     altname.set('tipzoffset', 'tipsyzoffset');
   }
 
+  public function setValue(s:String, val:Float)
+  {
+    if (modList.exists(s) || altname.exists(s)) modList.set(getName(s), val);
+  }
+
   public function getValue(s:String):Float
     return modList.exists(s) ? modList.get(s) : 0;
 
-  public function modNameExists(s:String):Bool
-    return modList.exists(s) || altname.exists(s);
-
-  public function getName(s:String)
+  public function getName(s:String):String
     return altname.exists(s) ? altname.get(s) : s;
 
   function UpdateTipsy(time:Float, offset:Float, speed:Float, col:Int, ?tan:Float = 0)
@@ -187,9 +198,9 @@ class Modchart
     var lastTime:Float = 0;
     var time:Float = Conductor.instance.songPosition / 1000 * 4294.967296 / 1000000; // fast time math
     expandSeconds += time - lastTime;
-    expandSeconds %= ((Math.PI * 2) / (getValue('expandperiod') + 1));
+    expandSeconds = ModchartMath.mod(expandSeconds, ((Math.PI * 2) / (getValue('expandperiod') + 1)));
     tanExpandSeconds += time - lastTime;
-    tanExpandSeconds %= ((Math.PI * 2) / (getValue('tanexpandperiod') + 1));
+    tanExpandSeconds = ModchartMath.mod(tanExpandSeconds, ((Math.PI * 2) / (getValue('tanexpandperiod') + 1)));
     UpdateBeat(dim_x, getValue('beatoffset'), getValue('beatmult'));
     UpdateBeat(dim_y, getValue('beatyoffset'), getValue('beatymult'));
     UpdateBeat(dim_z, getValue('beatzoffset'), getValue('beatzmult'));
@@ -284,7 +295,7 @@ class Modchart
     var iFirstCrossCol = iNumCols / 4;
     var iLastCrossCol = iNumCols - 1 - iFirstCrossCol;
     if (iCol >= iFirstCrossCol && iCol <= iLastCrossCol) f += getValue('cross');
-    if (f > 2) f %= 2;
+    if (f > 2) f = ModchartMath.mod(f, 2);
     if (f > 1) f = ModchartMath.scale(f, 1., 2., 1., 0.);
     if (Preferences.downscroll) f = 1 - f;
     return f;
@@ -464,6 +475,8 @@ class Modchart
     f += ARROW_SIZE * getValue('movey$iCol') + getValue('moveyoffset$iCol') + getValue('moveyoffset1$iCol');
 
     f += ARROW_SIZE * getValue('movey') + getValue('moveyoffset') + getValue('moveyoffset1');
+
+    if (getValue('vibrate') != 0) f += (Math.random() - 0.5) * getValue('vibrate') * 20;
 
     if (getValue('attenuatey') != 0) f += getValue('attenuatey') * (fYOffset / ARROW_SIZE) * (fYOffset / ARROW_SIZE) * (xOffset[iCol] / ARROW_SIZE);
 
@@ -679,14 +692,113 @@ class Modchart
     return f;
   }
 
-  public function GetRotation(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>, effectX:Float):Array<Float>
+  public function GetRotationZ(iCol:Int, fYOffset:Float, noteBeat:Float):Float
   {
-    return [];
+    var fRotation:Float = 0;
+    if (getValue('confusion') != 0 || getValue('confusionoffset') != 0 || getValue('confusion$iCol') != 0 || getValue('confusionoffset$iCol') != 0)
+      fRotation += ReceptorGetRotationZ(iCol);
+
+    // As usual, enable dizzy hold heads at your own risk. -Wolfman2000
+    if (getValue('dizzy') != 0)
+    {
+      var fSongBeat:Float = Conductor.instance.currentBeat;
+      var fDizzyRotation = noteBeat - fSongBeat;
+      fDizzyRotation *= getValue('dizzy');
+      fDizzyRotation = ModchartMath.mod(fDizzyRotation, 2 * Math.PI);
+      fDizzyRotation *= 180 / Math.PI;
+      fRotation += fDizzyRotation;
+    }
+    return fRotation;
   }
 
-  public function ReceptorGetRotation(iCol:Int, fYOffset:Float, pn:Int, xOffset:Array<Float>, effectX:Float):Array<Float>
+  public function GetRotationX(iCol:Int, fYOffset:Float):Float
   {
-    return [];
+    var fRotation:Float = 0;
+    if (getValue('confusionx') != 0 || getValue('confusionxoffset') != 0 || getValue('confusionx$iCol') != 0 || getValue('confusionxoffset$iCol') != 0)
+      fRotation += ReceptorGetRotationX(iCol);
+
+    if (getValue('roll') != 0)
+    {
+      fRotation += getValue('roll') * fYOffset / 2;
+    }
+    return fRotation;
+  }
+
+  public function GetRotationY(iCol:Int, fYOffset:Float):Float
+  {
+    var fRotation:Float = 0;
+    if (getValue('confusiony') != 0 || getValue('confusionyoffset') != 0 || getValue('confusiony$iCol') != 0 || getValue('confusionyoffset$iCol') != 0)
+      fRotation += ReceptorGetRotationY(iCol);
+    if (getValue('twirl') != 0)
+    {
+      fRotation += getValue('twirl') * fYOffset / 2;
+    }
+    return fRotation;
+  }
+
+  public function ReceptorGetRotationZ(iCol:Int):Float
+  {
+    var fRotation:Float = 0;
+    var beat:Float = Conductor.instance.currentBeat;
+    if (getValue('confusion$iCol') != 0) fRotation += getValue('confusion$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusionoffset') != 0) fRotation += getValue('confusionoffset') * 180.0 / Math.PI;
+
+    if (getValue('confusionoffset$iCol') != 0) fRotation += getValue('confusionoffset$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusion') != 0)
+    {
+      var fConfRotation:Float = beat;
+      fConfRotation *= getValue('confusion');
+      fConfRotation %= 2 * Math.PI;
+      fConfRotation *= -180 / Math.PI;
+      fRotation += fConfRotation;
+    }
+
+    return fRotation;
+  }
+
+  public function ReceptorGetRotationX(iCol:Int):Float
+  {
+    var fRotation:Float = 0;
+    var beat:Float = Conductor.instance.currentBeat;
+    if (getValue('confusionx$iCol') != 0) fRotation += getValue('confusionx$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusionxoffset') != 0) fRotation += getValue('confusionxoffset') * 180.0 / Math.PI;
+
+    if (getValue('confusionxoffset$iCol') != 0) fRotation += getValue('confusionxoffset$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusionx') != 0)
+    {
+      var fConfRotation:Float = beat;
+      fConfRotation *= getValue('confusionx');
+      fConfRotation = ModchartMath.mod(fConfRotation, 2 * Math.PI);
+      fConfRotation *= -180 / Math.PI;
+      fRotation += fConfRotation;
+    }
+    return fRotation;
+  }
+
+  public function ReceptorGetRotationY(iCol:Int):Float
+  {
+    var fRotation:Float = 0;
+    var beat:Float = Conductor.instance.currentBeat;
+    if (getValue('confusiony$iCol') != 0) fRotation += getValue('confusiony$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusionyoffset') != 0) fRotation += getValue('confusionyoffset') * 180.0 / Math.PI;
+
+    if (getValue('confusionyoffset$iCol') != 0) fRotation += getValue('confusionyoffset$iCol') * 180.0 / Math.PI;
+
+    if (getValue('confusiony') != 0)
+    {
+      var fConfRotation:Float = beat;
+      fConfRotation *= getValue('confusiony');
+      fConfRotation = ModchartMath.mod(fConfRotation, 2 * Math.PI);
+      fConfRotation *= -180 / Math.PI;
+      fRotation += fConfRotation;
+    }
+
+    return fRotation;
   }
 
   public function GetScale(iCol:Int, fYOffset:Float, pn:Int, defaultScale:Array<Float>):Array<Float>
@@ -759,6 +871,19 @@ class Modchart
     fZoom *= getValue('zoom');
     fZoom *= getValue('zoom$iCol');
     return fZoom;
+  }
+
+  public function GetMultScrollSpeed()
+  {
+    // it's fake, i can't do scroll bpm
+    var speed:Float = 1;
+    var xmod:Float = getValue('xmod');
+    var cmod:Float = getValue('cmod');
+    var mmod:Float = getValue('mmod');
+    speed *= xmod;
+    if (cmod >= 0) speed = cmod;
+    if (speed > mmod) speed = mmod;
+    return speed;
   }
 
   public function new():Void {}

@@ -13,7 +13,9 @@ class NoteHoldCover extends FlxTypedSpriteGroup<FlxSprite>
   static final FRAMERATE_DEFAULT:Int = 24;
 
   public var column:Int = 0;
-  public var z:Float = 0;
+  public var offsetX:Float = 0;
+  public var offsetY:Float = 0;
+  public var z_index:Float;
 
   static var glowFrames:FlxFramesCollection;
 

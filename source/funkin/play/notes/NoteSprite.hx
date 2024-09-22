@@ -6,15 +6,24 @@ import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxSprite;
 import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.HSVShader;
+import flixel.math.FlxPoint;
+import openfl.geom.Matrix;
+import flixel.FlxCamera;
+import flixel.FlxG;
+import flixel.graphics.frames.FlxFrame.FlxFrameAngle;
+import flixel.math.FlxAngle;
+import flixel.util.FlxDestroyUtil;
 
-class NoteSprite extends funkin.play.modchart.ModchartSprite.FunkinModchartSprite
+class NoteSprite extends FunkinSprite
 {
   static final DIRECTION_COLORS:Array<String> = ['purple', 'blue', 'green', 'red'];
 
   public var holdNoteSprite:SustainTrail;
   public var column:Int = 0;
-  public var z:Float = 0;
   public var defaultScale:Array<Float>;
+  public var offsetX:Float = 0;
+  public var offsetY:Float = 0;
+  public var z_index:Float;
 
   var hsvShader:HSVShader;
 

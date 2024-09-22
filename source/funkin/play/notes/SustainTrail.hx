@@ -18,7 +18,7 @@ import funkin.ui.options.PreferencesMenu;
  *
  * @author MtH
  */
-class SustainTrail extends funkin.play.modchart.ModchartSprite
+class SustainTrail extends flixel.addons.effects.FlxSkewedSprite
 {
   /**
    * The triangles corresponding to the hold, followed by the endcap.
@@ -34,11 +34,12 @@ class SustainTrail extends funkin.play.modchart.ModchartSprite
   public var noteData:Null<SongNoteData>;
   public var parentStrumline:Strumline;
 
+  public var z_index:Float;
   public var cover:NoteHoldCover = null;
   public var column:Int = 0;
-  public var z:Float = 0;
   public var defaultScale:Array<Float>;
-  public var reverseStuff:Float = 1;
+  public var offsetX:Float;
+  public var offsetY:Float;
 
   /**
    * Set to `true` if the user hit the note and is currently holding the sustain.

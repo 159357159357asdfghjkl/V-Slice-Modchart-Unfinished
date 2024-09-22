@@ -6,15 +6,17 @@ import flixel.FlxG;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxSprite;
 
-class NoteSplash extends funkin.play.modchart.ModchartSprite
+class NoteSplash extends flixel.addons.effects.FlxSkewedSprite
 {
   static final ALPHA:Float = 0.6;
   static final FRAMERATE_DEFAULT:Int = 24;
   static final FRAMERATE_VARIANCE:Int = 2;
 
   public var column:Int = 0;
-  public var z:Float = 0;
   public var defaultScale:Array<Float>;
+  public var offsetX:Float;
+  public var offsetY:Float;
+  public var z_index:Float;
 
   static var frameCollection:FlxFramesCollection;
 

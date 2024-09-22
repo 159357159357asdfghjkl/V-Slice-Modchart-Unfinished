@@ -11,19 +11,10 @@ class ModScripting
 
   public function new():Void {}
 
-  public function defineMod(name:String, val:Float, func:(Vector3D) -> Void)
-  {
-    if (!util.modExist(name))
-    {
-      game.playerStrumline.mods.modList.set(name, val);
-      game.opponentStrumline.mods.modList.set(name, val);
-    }
-  }
-
   public function setValue(name:String, val:Float, ?pn:Int)
   {
-    if (util.modExist(name)) util.fromPN(pn, (a:Strumline) -> {
-      a.mods.modList.set(a.mods.getName(name), val);
+    util.fromPN(pn, (a:Strumline) -> {
+      a.mods.setValue(name, val);
     });
   }
 }
@@ -44,7 +35,4 @@ class ModTools
       command(game.opponentStrumline);
     }
   }
-
-  public function modExist(name:String):Bool
-    return game.playerStrumline.mods.modNameExists(name) && game.opponentStrumline.mods.modNameExists(name);
 }

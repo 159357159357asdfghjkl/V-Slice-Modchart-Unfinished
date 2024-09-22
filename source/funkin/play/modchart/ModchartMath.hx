@@ -3,6 +3,7 @@ package funkin.play.modchart;
 import flixel.math.FlxMath;
 import openfl.geom.Vector3D;
 import funkin.play.notes.Strumline;
+import flixel.math.FlxPoint;
 
 class ModchartMath
 {
@@ -81,7 +82,7 @@ class ModchartMath
     }
   }
 
-  public static function PerspectiveProjection(x:Float, y:Float, z:Float, w:Float, obj:Int):Vector3D
+  public static function PerspectiveProjection(x:Float, y:Float, z:Float):Vector3D
   {
     var origin:Vector3D = new Vector3D(FlxG.width / 2, FlxG.height / 2);
     var zNear:Float = 0;
@@ -89,15 +90,14 @@ class ModchartMath
     var zRange:Float = zNear - zFar;
     var FOV:Float = 90.0;
     var tanHalfFOV:Float = Math.tan(rad * (FOV / 2));
-    var pos:Vector3D = new Vector3D(x, y, (z - 1000 * w) / 1000).subtract(origin);
+    var pos:Vector3D = new Vector3D(x, y, z / 1000).subtract(origin);
     if (pos.z > 0) pos.z = 0;
     var a:Float = (-zNear - zFar) / zRange;
     var b:Float = 2.0 * zFar * zNear / zRange;
     var newZPos:Float = a * -pos.z + b;
     var newXPos:Float = pos.x / (1 / tanHalfFOV) / newZPos;
     var newYPos:Float = pos.y / (1 / tanHalfFOV) / newZPos;
-    var zScale:Float = 1 / newZPos;
-    var vector:Vector3D = new Vector3D(newXPos, newYPos, zScale).add(origin);
+    var vector:Vector3D = new Vector3D(newXPos, newYPos, 1 / newZPos).add(origin);
     return vector;
   }
 
@@ -106,25 +106,53 @@ class ModchartMath
     return Std.int((f + fRoundInterval / 2) / fRoundInterval) * fRoundInterval;
   }
 
-  public static function RotationXYZ(rX:Float, rY:Float, rZ:Float):Vector3D
+  public static function rotate3D(axis:Vector3D, angle:Vector3D):Vector3D
   {
-    rX = rX * (Math.PI / 180);
-    rY = rY * (Math.PI / 180);
-    rZ = rZ * (Math.PI / 180);
-    var cX:Float = Math.cos(rX);
-    var sX:Float = Math.sin(rX);
-    var cY:Float = Math.cos(rY);
-    var sY:Float = Math.sin(rY);
-    var cZ:Float = Math.cos(rZ);
-    var sZ:Float = Math.sin(rZ);
-    return new Vector3D(cZ * cY
+    var cosx:Float = Math.cos(angle.x);
+    var sinx:Float = Math.sin(angle.x);
+    var cosy:Float = Math.cos(angle.y);
+    var siny:Float = Math.sin(angle.y);
+    var cosz:Float = Math.cos(angle.z);
+    var sinz:Float = Math.sin(angle.z);
+    var coszcosx:Float = cosz * cosx;
+    var sinzcosx:Float = sinz * cosx;
+    var coszsinx:Float = sinx * cosz;
+    var sinzsinx:Float = sinx * sinz;
+    return new Vector3D(axis.x * (cosz * cosy)
+      + axis.y * (sinzcosx + coszsinx * siny)
+      + axis.z * (sinzsinx - coszcosx * siny),
+      axis.x * (-cosy * sinz)
+      + axis.y * (coszcosx - sinzsinx * siny)
+      + axis.z * (coszsinx + sinzcosx * siny),
+      axis.x * siny
+      + axis.y * (-sinx * cosy)
+      + axis.z * (cosy * cosx));
+  }
+
+  public static function RotationXYZ(rotation:Vector3D):Vector3D
+  {
+    var rX:Float = rotation.x;
+    var rY:Float = rotation.y;
+    var rZ:Float = rotation.z;
+    rX *= Math.PI / 180;
+    rY *= Math.PI / 180;
+    rZ *= Math.PI / 180;
+
+    var cX:Float = FlxMath.fastCos(rX);
+    var sX:Float = FlxMath.fastSin(rX);
+    var cY:Float = FlxMath.fastCos(rY);
+    var sY:Float = FlxMath.fastSin(rY);
+    var cZ:Float = FlxMath.fastCos(rZ);
+    var sZ:Float = FlxMath.fastSin(rZ);
+
+    return new Vector3D((cZ * cY)
       + (cZ * sY * sX + sZ * cX)
       + (cZ * sY * cX + sZ * (-sX)),
-      (-sZ) * cY
+      ((-sZ) * cY)
       + ((-sZ) * sY * sX + cZ * cX)
       + ((-sZ) * sY * cX + cZ * (-sX)),
       -sY
-      + cY * sX
-      + cY * cX);
+      + (cY * sX)
+      + (cY * cX));
   }
 }

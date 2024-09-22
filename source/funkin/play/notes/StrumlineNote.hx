@@ -4,11 +4,15 @@ import funkin.play.notes.notestyle.NoteStyle;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxSprite;
 import funkin.play.notes.NoteSprite;
+import openfl.Vector;
+import openfl.geom.Vector3D;
+import funkin.play.modchart.ModchartMath;
+import flixel.math.FlxPoint;
 
 /**
  * The actual receptor that you see on screen.
  */
-class StrumlineNote extends funkin.play.modchart.ModchartSprite
+class StrumlineNote extends flixel.addons.effects.FlxSkewedSprite
 {
   public var isPlayer(default, null):Bool;
 
@@ -19,8 +23,11 @@ class StrumlineNote extends funkin.play.modchart.ModchartSprite
   static final CONFIRM_HOLD_TIME:Float = 0.1;
 
   public var column:Int = 0;
-  public var z:Float = 0;
   public var defaultScale:Array<Float>;
+  public var offsetX:Float;
+  public var offsetY:Float;
+  public var z_index:Float;
+  public var rotation:Vector3D = new Vector3D();
 
   function set_direction(value:NoteDirection):NoteDirection
   {
@@ -159,7 +166,7 @@ class StrumlineNote extends funkin.play.modchart.ModchartSprite
     return this.animation.finished;
   }
 
-  static final DEFAULT_OFFSET:Int = 13;
+  public static final DEFAULT_OFFSET:Int = 13;
 
   /**
    * Adjusts the position of the sprite's graphic relative to the hitbox.
@@ -180,5 +187,85 @@ class StrumlineNote extends funkin.play.modchart.ModchartSprite
     {
       this.centerOrigin();
     }
+  }
+
+  override function draw():Void
+  {
+    // from troll engine but much worse
+    if (alpha == 0 || graphic == null || !exists || !visible) return;
+    for (camera in cameras)
+    {
+      if (camera.exists && camera != null)
+      {
+        if (!camera.visible || camera.alpha == 0) continue;
+        var wid:Float = frame.frame.width * scale.x;
+        var h:Float = frame.frame.height * scale.y;
+        var off:Vector3D = new Vector3D(width / 2, height / 2);
+        var topLeft:Vector3D = new Vector3D(-wid / 2, -h / 2); // .add(off);
+        var topRight:Vector3D = new Vector3D(wid / 2, -h / 2); // .add(off);
+        var bottomLeft:Vector3D = new Vector3D(-wid / 2, h / 2); // .add(off);
+        var bottomRight:Vector3D = new Vector3D(wid / 2, h / 2); // .add(off);
+        var rotatedLT:Vector3D = ModchartMath.rotate3D(topLeft,
+          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
+        var rotatedRT:Vector3D = ModchartMath.rotate3D(topRight,
+          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
+        var rotatedLB:Vector3D = ModchartMath.rotate3D(bottomLeft,
+          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
+        var rotatedRB:Vector3D = ModchartMath.rotate3D(bottomRight,
+          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
+        /*var vertices:Vector<Float> = new Vector<Float>(8, false, [
+              width / 2 + topLeft.x,
+              height / 2 + topLeft.y,
+              width / 2 + topRight.x,
+              height / 2 + topRight.y,
+              width / 2 + bottomLeft.x,
+              height / 2 + bottomLeft.y,
+              width / 2 + bottomRight.x,
+              height / 2 + bottomRight.y
+            ]);
+          var vertices:Vector<Float> = new Vector<Float>(8, false, [
+            topLeft.x,
+            topLeft.y,
+            topRight.x,
+            topRight.y,
+            bottomLeft.x,
+            bottomLeft.y,
+            bottomRight.x,
+            bottomRight.y
+          ]); */
+        var vertices:Vector<Float> = new Vector<Float>(8, false, [
+          width / 2 + rotatedLT.x,
+          height / 2 + rotatedLT.y,
+          width / 2 + rotatedRT.x,
+          height / 2 + rotatedRT.y,
+          width / 2 + rotatedLB.x,
+          height / 2 + rotatedLB.y,
+          width / 2 + rotatedRB.x,
+          height / 2 + rotatedRB.y
+        ]);
+        var uvtData:Vector<Float> = new Vector<Float>(8, false, [
+          frame.uv.x,
+          frame.uv.y,
+          frame.uv.width,
+          frame.uv.y,
+          frame.uv.x,
+          frame.uv.height,
+          frame.uv.width,
+          frame.uv.height
+        ]);
+        var indices:Vector<Int> = new Vector<Int>(6, true, [0, 1, 2, 1, 2, 3]);
+        getScreenPosition(_point, camera);
+        camera.drawTriangles(graphic, vertices, indices, uvtData, null, _point, blend, true, antialiasing, null, shader);
+      }
+    }
+    #if FLX_DEBUG
+    if (FlxG.debugger.drawDebug) drawDebug();
+    #end
+  }
+
+  override public function destroy():Void
+  {
+    rotation = null;
+    super.destroy();
   }
 }
