@@ -13,11 +13,15 @@ import flixel.FlxG;
 import flixel.graphics.frames.FlxFrame.FlxFrameAngle;
 import flixel.math.FlxAngle;
 import flixel.util.FlxDestroyUtil;
+import openfl.Vector;
+import openfl.geom.Vector3D;
+import funkin.play.modchart.ModchartMath;
 
 class NoteSprite extends FunkinSprite
 {
   static final DIRECTION_COLORS:Array<String> = ['purple', 'blue', 'green', 'red'];
 
+  public var rotation:Vector3D = new Vector3D();
   public var holdNoteSprite:SustainTrail;
   public var column:Int = 0;
   public var defaultScale:Array<Float>;
@@ -216,10 +220,149 @@ class NoteSprite extends FunkinSprite
     super.kill();
   }
 
-  public override function destroy():Void
+  public var skew(default, null):FlxPoint = FlxPoint.get();
+
+  /**
+   * Tranformation matrix for this sprite.
+   * Used only when matrixExposed is set to true
+   */
+  public var transformMatrix(default, null):Matrix = new Matrix();
+
+  /**
+   * Bool flag showing whether transformMatrix is used for rendering or not.
+   * False by default, which means that transformMatrix isn't used for rendering
+   */
+  public var matrixExposed:Bool = false;
+
+  /**
+   * Internal helper matrix object. Used for rendering calculations when matrixExposed is set to false
+   */
+  var _skewMatrix:Matrix = new Matrix();
+
+  /**
+   * WARNING: This will remove this sprite entirely. Use kill() if you
+   * want to disable it temporarily only and reset() it later to revive it.
+   * Used to clean up memory.
+   */
+  override public function destroy():Void
   {
+    skew = FlxDestroyUtil.put(skew);
+    _skewMatrix = null;
+    transformMatrix = null;
     // This function should ONLY get called as you leave PlayState entirely.
     // Otherwise, we want the game to keep reusing note sprites to save memory.
     super.destroy();
+  }
+
+  override function drawComplex(camera:FlxCamera):Void
+  {
+    _frame.prepareMatrix(_matrix, FlxFrameAngle.ANGLE_0, checkFlipX(), checkFlipY());
+    _matrix.translate(-origin.x, -origin.y);
+    _matrix.scale(scale.x, scale.y);
+
+    if (matrixExposed)
+    {
+      _matrix.concat(transformMatrix);
+    }
+    else
+    {
+      if (bakedRotationAngle <= 0)
+      {
+        updateTrig();
+
+        if (angle != 0) _matrix.rotateWithTrig(_cosAngle, _sinAngle);
+      }
+
+      updateSkewMatrix();
+      _matrix.concat(_skewMatrix);
+    }
+
+    getScreenPosition(_point, camera).subtractPoint(offset);
+    _point.addPoint(origin);
+    if (isPixelPerfectRender(camera)) _point.floor();
+
+    _matrix.translate(_point.x, _point.y);
+    camera.drawPixels(_frame, framePixels, _matrix, colorTransform, blend, antialiasing, shader);
+  }
+
+  function updateSkewMatrix():Void
+  {
+    _skewMatrix.identity();
+
+    if (skew.x != 0 || skew.y != 0)
+    {
+      _skewMatrix.b = Math.tan(skew.y * FlxAngle.TO_RAD);
+      _skewMatrix.c = Math.tan(skew.x * FlxAngle.TO_RAD);
+    }
+  }
+
+  override function draw():Void
+  {
+    // from troll engine but much worse
+    if (alpha == 0 || graphic == null || !exists || !visible) return;
+    for (camera in cameras)
+    {
+      if (camera.exists && camera != null)
+      {
+        if (!camera.visible || camera.alpha == 0) continue;
+        var wid:Float = frame.frame.width * scale.x;
+        var h:Float = frame.frame.height * scale.y;
+        var topLeft:Vector3D = new Vector3D(-wid / 2, -h / 2);
+        var topRight:Vector3D = new Vector3D(wid / 2, -h / 2);
+        var bottomLeft:Vector3D = new Vector3D(-wid / 2, h / 2);
+        var bottomRight:Vector3D = new Vector3D(wid / 2, h / 2);
+
+        /*var rotatedLT:Vector3D = ModchartMath.RotationXYZ(topLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedRT:Vector3D = ModchartMath.RotationXYZ(topRight, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedLB:Vector3D = ModchartMath.RotationXYZ(bottomLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedRB:Vector3D = ModchartMath.RotationXYZ(bottomRight, new Vector3D(rotation.x, rotation.y, rotation.z)); */
+        var rotatedLT:Vector3D = ModchartMath.rotateVector3(topLeft, rotation.x, rotation.y, rotation.z);
+        var rotatedRT:Vector3D = ModchartMath.rotateVector3(topRight, rotation.x, rotation.y, rotation.z);
+        var rotatedLB:Vector3D = ModchartMath.rotateVector3(bottomLeft, rotation.x, rotation.y, rotation.z);
+        var rotatedRB:Vector3D = ModchartMath.rotateVector3(bottomRight, rotation.x, rotation.y, rotation.z);
+        rotatedLT = ModchartMath.PerspectiveProjection(rotatedLT.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedRT = ModchartMath.PerspectiveProjection(rotatedRT.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedLB = ModchartMath.PerspectiveProjection(rotatedLB.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedRB = ModchartMath.PerspectiveProjection(rotatedRB.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        var vertices:Vector<Float> = new Vector<Float>(8, false, [
+          width / 2 + rotatedLT.x,
+          height / 2 + rotatedLT.y,
+          width / 2 + rotatedRT.x,
+          height / 2 + rotatedRT.y,
+          width / 2 + rotatedLB.x,
+          height / 2 + rotatedLB.y,
+          width / 2 + rotatedRB.x,
+          height / 2 + rotatedRB.y
+        ]);
+        var uvtData:Vector<Float> = new Vector<Float>(8, false, [
+          frame.uv.x,
+          frame.uv.y,
+          frame.uv.width,
+          frame.uv.y,
+          frame.uv.x,
+          frame.uv.height,
+          frame.uv.width,
+          frame.uv.height
+        ]);
+        var indices:Vector<Int> = new Vector<Int>(6, true, [0, 1, 2, 1, 2, 3]);
+        getScreenPosition(_point, camera);
+        camera.drawTriangles(graphic, vertices, indices, uvtData, null, _point, blend, true, antialiasing, null, shader);
+      }
+    }
+    #if FLX_DEBUG
+    if (FlxG.debugger.drawDebug) drawDebug();
+    #end
+  }
+
+  override public function isSimpleRender(?camera:FlxCamera):Bool
+  {
+    if (FlxG.renderBlit)
+    {
+      return super.isSimpleRender(camera) && (skew.x == 0) && (skew.y == 0) && !matrixExposed;
+    }
+    else
+    {
+      return false;
+    }
   }
 }

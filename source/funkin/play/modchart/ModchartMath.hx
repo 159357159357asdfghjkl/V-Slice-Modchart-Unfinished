@@ -1,9 +1,8 @@
 package funkin.play.modchart;
 
-import flixel.math.FlxMath;
 import openfl.geom.Vector3D;
 import funkin.play.notes.Strumline;
-import flixel.math.FlxPoint;
+import flixel.math.*;
 
 class ModchartMath
 {
@@ -34,7 +33,7 @@ class ModchartMath
     return n;
   }
 
-  inline public static function mod(x:Float, y:Float):Float // should i use this?
+  inline public static function mod(x:Float, y:Float):Float
     return x - Math.floor(x / y) * y;
 
   inline public static function BeatToNoteRow(beat:Float):Int
@@ -82,7 +81,7 @@ class ModchartMath
     }
   }
 
-  public static function PerspectiveProjection(x:Float, y:Float, z:Float):Vector3D
+  public static function PerspectiveProjection(vec3:Vector3D):Vector3D
   {
     var origin:Vector3D = new Vector3D(FlxG.width / 2, FlxG.height / 2);
     var zNear:Float = 0;
@@ -90,14 +89,14 @@ class ModchartMath
     var zRange:Float = zNear - zFar;
     var FOV:Float = 90.0;
     var tanHalfFOV:Float = Math.tan(rad * (FOV / 2));
-    var pos:Vector3D = new Vector3D(x, y, z / 1000).subtract(origin);
+    var pos:Vector3D = new Vector3D(vec3.x, vec3.y, vec3.z / 1000).subtract(origin);
     if (pos.z > 0) pos.z = 0;
     var a:Float = (-zNear - zFar) / zRange;
     var b:Float = 2.0 * zFar * zNear / zRange;
     var newZPos:Float = a * -pos.z + b;
     var newXPos:Float = pos.x / (1 / tanHalfFOV) / newZPos;
     var newYPos:Float = pos.y / (1 / tanHalfFOV) / newZPos;
-    var vector:Vector3D = new Vector3D(newXPos, newYPos, 1 / newZPos).add(origin);
+    var vector:Vector3D = new Vector3D(newXPos, newYPos, newZPos).add(origin);
     return vector;
   }
 
@@ -106,34 +105,22 @@ class ModchartMath
     return Std.int((f + fRoundInterval / 2) / fRoundInterval) * fRoundInterval;
   }
 
-  public static function rotate3D(axis:Vector3D, angle:Vector3D):Vector3D
+  public static function RotationXYZ(vec:Vector3D, angle:Vector3D):Vector3D
   {
-    var cosx:Float = Math.cos(angle.x);
-    var sinx:Float = Math.sin(angle.x);
-    var cosy:Float = Math.cos(angle.y);
-    var siny:Float = Math.sin(angle.y);
-    var cosz:Float = Math.cos(angle.z);
-    var sinz:Float = Math.sin(angle.z);
-    var coszcosx:Float = cosz * cosx;
-    var sinzcosx:Float = sinz * cosx;
-    var coszsinx:Float = sinx * cosz;
-    var sinzsinx:Float = sinx * sinz;
-    return new Vector3D(axis.x * (cosz * cosy)
-      + axis.y * (sinzcosx + coszsinx * siny)
-      + axis.z * (sinzsinx - coszcosx * siny),
-      axis.x * (-cosy * sinz)
-      + axis.y * (coszcosx - sinzsinx * siny)
-      + axis.z * (coszsinx + sinzcosx * siny),
-      axis.x * siny
-      + axis.y * (-sinx * cosy)
-      + axis.z * (cosy * cosx));
+    var zX:Float = vec.x * Math.cos(angle.z) - vec.y * Math.sin(angle.z);
+    var zY:Float = vec.x * Math.sin(angle.z) + vec.y * Math.cos(angle.z);
+    var yX:Float = zX * Math.cos(angle.y) - vec.z * Math.sin(angle.y);
+    var yY:Float = zX * Math.sin(angle.y) + vec.z * Math.cos(angle.y);
+    var xX:Float = yY * Math.cos(angle.x) - zY * Math.sin(angle.x);
+    var xY:Float = yY * Math.sin(angle.x) + zY * Math.cos(angle.x);
+    return new Vector3D(yX, xY, xX);
   }
 
-  public static function RotationXYZ(rotation:Vector3D):Vector3D
+  public static function rotateVector3(out:Vector3D, rX:Float, rY:Float, rZ:Float):Vector3D
   {
-    var rX:Float = rotation.x;
-    var rY:Float = rotation.y;
-    var rZ:Float = rotation.z;
+    /** I know this step is superfluous
+     * but notITG is like this
+    **/
     rX *= Math.PI / 180;
     rY *= Math.PI / 180;
     rZ *= Math.PI / 180;
@@ -145,14 +132,12 @@ class ModchartMath
     var cZ:Float = FlxMath.fastCos(rZ);
     var sZ:Float = FlxMath.fastSin(rZ);
 
-    return new Vector3D((cZ * cY)
-      + (cZ * sY * sX + sZ * cX)
-      + (cZ * sY * cX + sZ * (-sX)),
-      ((-sZ) * cY)
-      + ((-sZ) * sY * sX + cZ * cX)
-      + ((-sZ) * sY * cX + cZ * (-sX)),
-      -sY
-      + (cY * sX)
-      + (cY * cX));
+    var mat:Array<Float> = [
+      cZ * cY, cZ * sY * sX + sZ * cX, cZ * sY * cX + sZ * (-sX), 0, (-sZ) * cY, (-sZ) * sY * sX + cZ * cX, (-sZ) * sY * cX + cZ * (-sX), 0, -sY, cY * sX,
+      cY * cX, 0, 0, 0, 0, 1,
+    ];
+    var matToVec:Vector3D = new Vector3D(mat[0 * 4 + 0] * out.x + mat[1 * 4 + 0] * out.y + mat[2 * 4 + 0] * out.z,
+      mat[0 * 4 + 1] * out.x + mat[1 * 4 + 1] * out.y + mat[2 * 4 + 1] * out.z, mat[0 * 4 + 2] * out.x + mat[1 * 4 + 2] * out.y + mat[2 * 4 + 2] * out.z);
+    return matToVec;
   }
 }

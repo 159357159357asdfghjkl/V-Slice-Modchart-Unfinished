@@ -7,7 +7,6 @@ import funkin.play.notes.NoteSprite;
 import openfl.Vector;
 import openfl.geom.Vector3D;
 import funkin.play.modchart.ModchartMath;
-import flixel.math.FlxPoint;
 
 /**
  * The actual receptor that you see on screen.
@@ -200,39 +199,23 @@ class StrumlineNote extends flixel.addons.effects.FlxSkewedSprite
         if (!camera.visible || camera.alpha == 0) continue;
         var wid:Float = frame.frame.width * scale.x;
         var h:Float = frame.frame.height * scale.y;
-        var off:Vector3D = new Vector3D(width / 2, height / 2);
-        var topLeft:Vector3D = new Vector3D(-wid / 2, -h / 2); // .add(off);
-        var topRight:Vector3D = new Vector3D(wid / 2, -h / 2); // .add(off);
-        var bottomLeft:Vector3D = new Vector3D(-wid / 2, h / 2); // .add(off);
-        var bottomRight:Vector3D = new Vector3D(wid / 2, h / 2); // .add(off);
-        var rotatedLT:Vector3D = ModchartMath.rotate3D(topLeft,
-          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
-        var rotatedRT:Vector3D = ModchartMath.rotate3D(topRight,
-          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
-        var rotatedLB:Vector3D = ModchartMath.rotate3D(bottomLeft,
-          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
-        var rotatedRB:Vector3D = ModchartMath.rotate3D(bottomRight,
-          new Vector3D(rotation.x * ModchartMath.rad, rotation.y * ModchartMath.rad, rotation.z * ModchartMath.rad));
-        /*var vertices:Vector<Float> = new Vector<Float>(8, false, [
-              width / 2 + topLeft.x,
-              height / 2 + topLeft.y,
-              width / 2 + topRight.x,
-              height / 2 + topRight.y,
-              width / 2 + bottomLeft.x,
-              height / 2 + bottomLeft.y,
-              width / 2 + bottomRight.x,
-              height / 2 + bottomRight.y
-            ]);
-          var vertices:Vector<Float> = new Vector<Float>(8, false, [
-            topLeft.x,
-            topLeft.y,
-            topRight.x,
-            topRight.y,
-            bottomLeft.x,
-            bottomLeft.y,
-            bottomRight.x,
-            bottomRight.y
-          ]); */
+        var topLeft:Vector3D = new Vector3D(-wid / 2, -h / 2);
+        var topRight:Vector3D = new Vector3D(wid / 2, -h / 2);
+        var bottomLeft:Vector3D = new Vector3D(-wid / 2, h / 2);
+        var bottomRight:Vector3D = new Vector3D(wid / 2, h / 2);
+
+        /*var rotatedLT:Vector3D = ModchartMath.RotationXYZ(topLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedRT:Vector3D = ModchartMath.RotationXYZ(topRight, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedLB:Vector3D = ModchartMath.RotationXYZ(bottomLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
+          var rotatedRB:Vector3D = ModchartMath.RotationXYZ(bottomRight, new Vector3D(rotation.x, rotation.y, rotation.z)); */
+        var rotatedLT:Vector3D = ModchartMath.rotateVector3(topLeft, rotation.x, rotation.y, rotation.z);
+        var rotatedRT:Vector3D = ModchartMath.rotateVector3(topRight, rotation.x, rotation.y, rotation.z);
+        var rotatedLB:Vector3D = ModchartMath.rotateVector3(bottomLeft, rotation.x, rotation.y, rotation.z);
+        var rotatedRB:Vector3D = ModchartMath.rotateVector3(bottomRight, rotation.x, rotation.y, rotation.z);
+        rotatedLT = ModchartMath.PerspectiveProjection(rotatedLT.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedRT = ModchartMath.PerspectiveProjection(rotatedRT.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedLB = ModchartMath.PerspectiveProjection(rotatedLB.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
+        rotatedRB = ModchartMath.PerspectiveProjection(rotatedRB.add(new Vector3D(x, y, rotation.w - 1000))).subtract(new Vector3D(x, y, rotation.w));
         var vertices:Vector<Float> = new Vector<Float>(8, false, [
           width / 2 + rotatedLT.x,
           height / 2 + rotatedLT.y,

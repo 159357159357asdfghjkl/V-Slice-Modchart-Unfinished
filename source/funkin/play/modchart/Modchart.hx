@@ -89,7 +89,7 @@ class Modchart
       'tantipsyzoffset', 'drunky', 'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod',
       'invertsine', 'vibrate', 'scale', 'scalex', 'scaley', 'squish', 'stretch', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod', 'shrinkmult',
       'shrinklinear', 'noteskewx', 'noteskewy', 'zoomx', 'zoomy', 'tinyx', 'tinyy', 'confusionx', 'confusionxoffset', 'confusiony', 'confusionyoffset',
-      'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant'
+      'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant', 'camx', 'camy', 'camz', 'skewx', 'skewy'
     ];
     var ONE:Array<String> = ['xmod', 'zoom', 'movew'];
     for (i in 0...4)
@@ -170,7 +170,7 @@ class Modchart
   {
     var fAccelTime:Float = 0.2;
     var fTotalTime:Float = 0.5;
-    var fBeat:Float = ((Conductor.instance.currentBeat + fAccelTime + beat_offset) * (beat_mult + 1));
+    var fBeat:Float = ((Conductor.instance.currentBeatTime + fAccelTime + beat_offset) * (beat_mult + 1));
     var bEvenBeat:Bool = (Std.int(fBeat) % 2) != 0;
     beatFactor[d] = 0;
     if (fBeat < 0) return;
@@ -226,7 +226,7 @@ class Modchart
 
     if (getValue('randomspeed') != 0)
     {
-      var seed:Int = (ModchartMath.BeatToNoteRow(Conductor.instance.currentBeat) << 8) + (iCol * 100);
+      var seed:Int = (ModchartMath.BeatToNoteRow(Conductor.instance.currentBeatTime) << 8) + (iCol * 100);
 
       for (i in 0...3)
         seed = ((seed * 1664525) + 1013904223) & 0xFFFFFFFF;
@@ -280,6 +280,7 @@ class Modchart
 
     var reverseStuff:Float = (1 - 2 * GetReversePercentForColumn(iCol));
     fYOffset *= reverseStuff;
+    fYOffset *= GetMultScrollSpeed();
     return fYOffset;
   }
 
@@ -692,16 +693,16 @@ class Modchart
     return f;
   }
 
-  public function GetRotationZ(iCol:Int, fYOffset:Float, noteBeat:Float):Float
+  public function GetRotationZ(iCol:Int, fYOffset:Float, noteBeat:Float, xPos:Float):Float
   {
     var fRotation:Float = 0;
     if (getValue('confusion') != 0 || getValue('confusionoffset') != 0 || getValue('confusion$iCol') != 0 || getValue('confusionoffset$iCol') != 0)
-      fRotation += ReceptorGetRotationZ(iCol);
+      fRotation += ReceptorGetRotationZ(iCol, xPos);
 
     // As usual, enable dizzy hold heads at your own risk. -Wolfman2000
     if (getValue('dizzy') != 0)
     {
-      var fSongBeat:Float = Conductor.instance.currentBeat;
+      var fSongBeat:Float = Conductor.instance.currentBeatTime;
       var fDizzyRotation = noteBeat - fSongBeat;
       fDizzyRotation *= getValue('dizzy');
       fDizzyRotation = ModchartMath.mod(fDizzyRotation, 2 * Math.PI);
@@ -736,10 +737,10 @@ class Modchart
     return fRotation;
   }
 
-  public function ReceptorGetRotationZ(iCol:Int):Float
+  public function ReceptorGetRotationZ(iCol:Int, xPos:Float):Float
   {
     var fRotation:Float = 0;
-    var beat:Float = Conductor.instance.currentBeat;
+    var beat:Float = Conductor.instance.currentBeatTime;
     if (getValue('confusion$iCol') != 0) fRotation += getValue('confusion$iCol') * 180.0 / Math.PI;
 
     if (getValue('confusionoffset') != 0) fRotation += getValue('confusionoffset') * 180.0 / Math.PI;
@@ -755,13 +756,14 @@ class Modchart
       fRotation += fConfRotation;
     }
 
+    if (getValue('orient') != 0) fRotation += xPos;
     return fRotation;
   }
 
   public function ReceptorGetRotationX(iCol:Int):Float
   {
     var fRotation:Float = 0;
-    var beat:Float = Conductor.instance.currentBeat;
+    var beat:Float = Conductor.instance.currentBeatTime;
     if (getValue('confusionx$iCol') != 0) fRotation += getValue('confusionx$iCol') * 180.0 / Math.PI;
 
     if (getValue('confusionxoffset') != 0) fRotation += getValue('confusionxoffset') * 180.0 / Math.PI;
@@ -779,10 +781,20 @@ class Modchart
     return fRotation;
   }
 
+  public function GetCameraEffects()
+  {
+    var x:Float = getValue('camx');
+    var y:Float = getValue('camy');
+    var z:Float = getValue('camz');
+    var skewx:Float = getValue('skewx');
+    var skewy:Float = getValue('skewy');
+    return [x, y, z, skewx, skewy];
+  }
+
   public function ReceptorGetRotationY(iCol:Int):Float
   {
     var fRotation:Float = 0;
-    var beat:Float = Conductor.instance.currentBeat;
+    var beat:Float = Conductor.instance.currentBeatTime;
     if (getValue('confusiony$iCol') != 0) fRotation += getValue('confusiony$iCol') * 180.0 / Math.PI;
 
     if (getValue('confusionyoffset') != 0) fRotation += getValue('confusionyoffset') * 180.0 / Math.PI;
@@ -873,7 +885,7 @@ class Modchart
     return fZoom;
   }
 
-  public function GetMultScrollSpeed()
+  function GetMultScrollSpeed()
   {
     // it's fake, i can't do scroll bpm
     var speed:Float = 1;
