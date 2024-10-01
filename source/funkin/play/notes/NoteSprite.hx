@@ -312,10 +312,6 @@ class NoteSprite extends FunkinSprite
         var bottomLeft:Vector3D = new Vector3D(-wid / 2, h / 2);
         var bottomRight:Vector3D = new Vector3D(wid / 2, h / 2);
 
-        /*var rotatedLT:Vector3D = ModchartMath.RotationXYZ(topLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
-          var rotatedRT:Vector3D = ModchartMath.RotationXYZ(topRight, new Vector3D(rotation.x, rotation.y, rotation.z));
-          var rotatedLB:Vector3D = ModchartMath.RotationXYZ(bottomLeft, new Vector3D(rotation.x, rotation.y, rotation.z));
-          var rotatedRB:Vector3D = ModchartMath.RotationXYZ(bottomRight, new Vector3D(rotation.x, rotation.y, rotation.z)); */
         var rotatedLT:Vector3D = ModchartMath.rotateVector3(topLeft, rotation.x, rotation.y, rotation.z);
         var rotatedRT:Vector3D = ModchartMath.rotateVector3(topRight, rotation.x, rotation.y, rotation.z);
         var rotatedLB:Vector3D = ModchartMath.rotateVector3(bottomLeft, rotation.x, rotation.y, rotation.z);

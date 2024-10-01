@@ -395,9 +395,12 @@ class Strumline extends FlxSpriteGroup
       note.skew.y = scale[3];
       note.x = perspective.x + note.offsetX;
       note.y = perspective.y + note.offsetY;
-      var noteBeat:Float = (conductorInUse.songPosition / 1000) * (conductorInUse.bpm / 60);
-      note.rotation.copyFrom(new Vector3D(mods.GetRotationX(col, realofs), mods.GetRotationY(col, realofs),
-        mods.GetRotationZ(col, realofs, noteBeat, (mods.GetXPos(col, realofs, modNumber, xoffArray)) + note.angle), perspective.z));
+      var noteBeat:Float = Conductor.instance.getBeatTimeInMs(note.strumTime);
+      if (note.holdNoteSprite == null) note.rotation.copyFrom(new Vector3D(mods.GetRotationX(col, realofs), mods.GetRotationY(col, realofs),
+        mods.GetRotationZ(col, realofs, noteBeat, (mods.GetXPos(col, realofs, modNumber, xoffArray)) + note.angle, false), perspective.z));
+      else
+        note.rotation.copyFrom(new Vector3D(0, 0,
+          mods.GetRotationZ(col, realofs, noteBeat, (mods.GetXPos(col, realofs, modNumber, xoffArray)) + note.angle, true), perspective.z),);
 
       var isOffscreen = Preferences.downscroll ? note.y > FlxG.height : note.y < -note.height;
       if (note.handledMiss && isOffscreen)

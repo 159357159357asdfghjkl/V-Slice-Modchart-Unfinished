@@ -105,22 +105,8 @@ class ModchartMath
     return Std.int((f + fRoundInterval / 2) / fRoundInterval) * fRoundInterval;
   }
 
-  public static function RotationXYZ(vec:Vector3D, angle:Vector3D):Vector3D
-  {
-    var zX:Float = vec.x * Math.cos(angle.z) - vec.y * Math.sin(angle.z);
-    var zY:Float = vec.x * Math.sin(angle.z) + vec.y * Math.cos(angle.z);
-    var yX:Float = zX * Math.cos(angle.y) - vec.z * Math.sin(angle.y);
-    var yY:Float = zX * Math.sin(angle.y) + vec.z * Math.cos(angle.y);
-    var xX:Float = yY * Math.cos(angle.x) - zY * Math.sin(angle.x);
-    var xY:Float = yY * Math.sin(angle.x) + zY * Math.cos(angle.x);
-    return new Vector3D(yX, xY, xX);
-  }
-
   public static function rotateVector3(out:Vector3D, rX:Float, rY:Float, rZ:Float):Vector3D
   {
-    /** I know this step is superfluous
-     * but notITG is like this
-    **/
     rX *= Math.PI / 180;
     rY *= Math.PI / 180;
     rZ *= Math.PI / 180;

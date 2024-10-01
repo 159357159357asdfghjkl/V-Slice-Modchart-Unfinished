@@ -89,7 +89,7 @@ class Modchart
       'tantipsyzoffset', 'drunky', 'drunkyspeed', 'drunkyoffset', 'drunkyperiod', 'tandrunky', 'tandrunkyspeed', 'tandrunkyoffset', 'tandrunkyperiod',
       'invertsine', 'vibrate', 'scale', 'scalex', 'scaley', 'squish', 'stretch', 'pulseinner', 'pulseouter', 'pulseoffset', 'pulseperiod', 'shrinkmult',
       'shrinklinear', 'noteskewx', 'noteskewy', 'zoomx', 'zoomy', 'tinyx', 'tinyy', 'confusionx', 'confusionxoffset', 'confusiony', 'confusionyoffset',
-      'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant', 'camx', 'camy', 'camz', 'skewx', 'skewy'
+      'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant', 'dizzyholds'
     ];
     var ONE:Array<String> = ['xmod', 'zoom', 'movew'];
     for (i in 0...4)
@@ -280,7 +280,14 @@ class Modchart
 
     var reverseStuff:Float = (1 - 2 * GetReversePercentForColumn(iCol));
     fYOffset *= reverseStuff;
-    fYOffset *= GetMultScrollSpeed();
+    var speeds:Float = 1;
+    var xmod:Float = getValue('xmod');
+    var cmod:Float = getValue('cmod');
+    var mmod:Float = getValue('mmod');
+    speeds *= xmod;
+    if (cmod >= 0) speeds = cmod;
+    if (speeds > mmod) speeds = mmod;
+    fYOffset *= speeds;
     return fYOffset;
   }
 
@@ -693,14 +700,20 @@ class Modchart
     return f;
   }
 
-  public function GetRotationZ(iCol:Int, fYOffset:Float, noteBeat:Float, xPos:Float):Float
+  public function GetRotationZ(iCol:Int, fYOffset:Float, noteBeat:Float, xPos:Float, isHoldHead:Bool):Float
   {
     var fRotation:Float = 0;
-    if (getValue('confusion') != 0 || getValue('confusionoffset') != 0 || getValue('confusion$iCol') != 0 || getValue('confusionoffset$iCol') != 0)
-      fRotation += ReceptorGetRotationZ(iCol, xPos);
+    if (!isHoldHead)
+    {
+      if (getValue('confusion') != 0
+        || getValue('confusionoffset') != 0
+        || getValue('confusion$iCol') != 0
+        || getValue('confusionoffset$iCol') != 0
+        || getValue('orient') != 0) fRotation += ReceptorGetRotationZ(iCol, xPos);
+    }
 
     // As usual, enable dizzy hold heads at your own risk. -Wolfman2000
-    if (getValue('dizzy') != 0)
+    if (getValue('dizzy') != 0 && (getValue('dizzyholds') != 0 || !isHoldHead))
     {
       var fSongBeat:Float = Conductor.instance.currentBeatTime;
       var fDizzyRotation = noteBeat - fSongBeat;
@@ -779,16 +792,6 @@ class Modchart
       fRotation += fConfRotation;
     }
     return fRotation;
-  }
-
-  public function GetCameraEffects()
-  {
-    var x:Float = getValue('camx');
-    var y:Float = getValue('camy');
-    var z:Float = getValue('camz');
-    var skewx:Float = getValue('skewx');
-    var skewy:Float = getValue('skewy');
-    return [x, y, z, skewx, skewy];
   }
 
   public function ReceptorGetRotationY(iCol:Int):Float
@@ -883,19 +886,6 @@ class Modchart
     fZoom *= getValue('zoom');
     fZoom *= getValue('zoom$iCol');
     return fZoom;
-  }
-
-  function GetMultScrollSpeed()
-  {
-    // it's fake, i can't do scroll bpm
-    var speed:Float = 1;
-    var xmod:Float = getValue('xmod');
-    var cmod:Float = getValue('cmod');
-    var mmod:Float = getValue('mmod');
-    speed *= xmod;
-    if (cmod >= 0) speed = cmod;
-    if (speed > mmod) speed = mmod;
-    return speed;
   }
 
   public function new():Void {}
