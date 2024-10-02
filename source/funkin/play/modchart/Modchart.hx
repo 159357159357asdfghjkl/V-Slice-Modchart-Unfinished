@@ -17,7 +17,6 @@ class Modchart
 {
   private var modList:Map<String, Float> = new Map<String, Float>();
   private var altname:Map<String, String> = new Map<String, String>();
-
   final ARROW_SIZE:Int = Strumline.NOTE_SPACING;
   final STEPMANIA_ARROW_SIZE:Int = 64;
   final SCREEN_HEIGHT = FlxG.height;
@@ -91,6 +90,7 @@ class Modchart
       'shrinklinear', 'noteskewx', 'noteskewy', 'zoomx', 'zoomy', 'tinyx', 'tinyy', 'confusionx', 'confusionxoffset', 'confusiony', 'confusionyoffset',
       'confusion', 'confusionoffset', 'dizzy', 'twirl', 'roll', 'orient', 'cosecant', 'dizzyholds'
     ];
+
     var ONE:Array<String> = ['xmod', 'zoom', 'movew'];
     for (i in 0...4)
     {
@@ -153,7 +153,7 @@ class Modchart
   }
 
   public function getValue(s:String):Float
-    return modList.exists(s) ? modList.get(s) : 0;
+    return (modList.exists(s) || altname.exists(s)) ? modList.get(getName(s)) : 0;
 
   public function getName(s:String):String
     return altname.exists(s) ? altname.get(s) : s;
